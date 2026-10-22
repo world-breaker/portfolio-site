@@ -1,0 +1,20 @@
+# 本仓只跟踪「对外门面」三个文件；五个仓是**兄弟目录**（或被 clone 到本仓内），一律不入库。
+hello-agent/
+rag-eval-platform/
+rag-mcp-server/
+job-fit-assistant/
+tiny-llm-from-scratch/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+.DS_Store

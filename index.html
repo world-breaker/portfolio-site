@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLM 面试作品集 · 图文讲解</title>
+<style>
+  :root{
+    --bg:#f6f8fb; --card:#ffffff; --ink:#1f2933; --sub:#52606d; --line:#d9e2ec;
+    --blue:#2b6cb0; --green:#2f855a; --amber:#b7791f; --red:#c53030; --purple:#6b46c1;
+    --soft:#eef2f7;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+       background:var(--bg);color:var(--ink);line-height:1.7}
+  header{background:linear-gradient(135deg,#2b6cb0,#6b46c1);color:#fff;padding:34px 28px}
+  header h1{margin:0 0 6px;font-size:26px}
+  header p{margin:0;opacity:.9}
+  nav{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);padding:10px 20px;
+      display:flex;gap:14px;flex-wrap:wrap;font-size:14px;z-index:5}
+  nav a{color:var(--blue);text-decoration:none}
+  main{max-width:980px;margin:0 auto;padding:24px 20px 80px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 24px;
+          margin:18px 0;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  h2{margin-top:0;border-left:5px solid var(--blue);padding-left:12px;font-size:21px}
+  h3{color:var(--sub);font-size:16px;margin:22px 0 8px}
+  code{background:var(--soft);padding:1px 6px;border-radius:5px;font-size:.9em}
+  .tag{display:inline-block;font-size:12px;padding:1px 9px;border-radius:999px;color:#fff;margin-right:6px}
+  .t-blue{background:var(--blue)} .t-green{background:var(--green)} .t-amber{background:var(--amber)}
+  .t-purple{background:var(--purple)} .t-red{background:var(--red)}
+  table{border-collapse:collapse;width:100%;font-size:14px;margin:10px 0}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--soft)}
+  svg{width:100%;height:auto;display:block;background:#fbfdff;border:1px solid var(--line);border-radius:10px;margin:12px 0}
+  .note{background:#fffaf0;border:1px solid #f6e2c0;color:#744210;padding:10px 14px;border-radius:10px;font-size:14px}
+  .key{background:#ebf8ff;border:1px solid #bee3f8;color:#1a4971;padding:10px 14px;border-radius:10px;font-size:14px}
+  ul{margin:8px 0 8px 0;padding-left:22px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:720px){.grid{grid-template-columns:1fr}
+    /* 手机上：图表保持可读宽度、在卡片内横向滚动，而不是被压到看不清 */
+    section{overflow-x:auto}
+    svg{width:880px;max-width:none}
+    table{font-size:13px}
+  }
+  footer{text-align:center;color:var(--sub);font-size:13px;padding:20px}
+  .big{font-size:15px}
+  main a{color:var(--blue);text-decoration:none;border-bottom:1px dashed var(--line)}
+  main a:hover{border-bottom-color:var(--blue)}
+  .hl{background:#fff5f5;border:1px solid #f6c0c0;color:#742a2a;padding:10px 14px;border-radius:10px;font-size:14px}
+  .jump{background:var(--soft);border:1px dashed var(--line);border-radius:10px;padding:10px 14px;font-size:14px}
+  .jump a{margin-right:10px}
+  td .mini{display:block;color:var(--sub);font-size:12px}
+  /* 数字卡片：只复用既有配色变量，不引入新主题 */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0 6px}
+  .stat{background:#fbfdff;border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;padding:10px 12px}
+  .stat b{display:block;font-size:22px;line-height:1.3;letter-spacing:-.02em}
+  .stat span{display:block;font-size:12px;color:var(--sub);margin-top:2px}
+  .stat.red{border-left-color:var(--red)} .stat.red b{color:var(--red)}
+  .stat.green{border-left-color:var(--green)} .stat.green b{color:var(--green)}
+  .stat.amber{border-left-color:var(--amber)} .stat.amber b{color:var(--amber)}
+  @media(max-width:720px){.stats{grid-template-columns:1fr 1fr}.stat b{font-size:19px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>LLM 面试作品集 · 图文讲解</h1>
+  <p>Agent + RAG + MCP + 评测 + LoRA/SFT 完整链路 · 让你看明白、讲得清</p>
+  <p style="margin-top:6px;font-size:14px;opacity:.88">本版补齐「可运维 / 可审计 / 可中断 / 可核算」那一层：鉴权 · 限流 · 探针指标 · 注入防护 · 断点续跑 · 用量核算</p>
+</header>
+<nav>
+  <a href="#panorama">总览</a>
+  <a href="#agent">① hello-agent</a>
+  <a href="#eval">② rag-eval-platform</a>
+  <a href="#judge">②-2 小模型当裁判（实测）</a>
+  <a href="#mcp">③ rag-mcp-server</a>
+  <a href="#assistant">④ interview-assistant</a>
+  <a href="#ci">⑤ CI / 一键门面</a>
+  <a href="#talk">面试讲法</a>
+  <a href="#honest">诚实边界</a>
+</nav>
+<main>
+
+<section id="panorama">
+  <h2>0 · 总览：六个项目怎么串成一条链</h2>
+  <p class="big">你这套作品集不是六个孤立 demo，而是<b>一条递进的能力链</b>：把"检索"做成可复用服务 → 被 Agent 调用 → 全链路可观测 → 用评测平台量化效果 → <b>把零件拼成真能用的应用</b> → <b>再从零训一次小模型</b>把基本功也证明一遍。面试时讲清这条主线，比逐个罗列项目强十倍。</p>
+  <svg viewBox="0 0 940 450" role="img" aria-label="作品集总览">
+    <defs>
+      <marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <path d="M0,0 L8,3 L0,6 Z" fill="#52606d"/>
+      </marker>
+    </defs>
+    <!-- 知识库 -->
+    <rect x="20" y="150" width="130" height="60" rx="10" fill="#eef2f7" stroke="#2b6cb0"/>
+    <text x="85" y="175" text-anchor="middle" font-size="14" fill="#1f2933">知识库</text>
+    <text x="85" y="195" text-anchor="middle" font-size="11" fill="#52606d">knowledge_base.json</text>
+
+    <!-- rag-mcp-server -->
+    <rect x="200" y="126" width="170" height="116" rx="12" fill="#fff" stroke="#2f855a" stroke-width="2"/>
+    <text x="285" y="152" text-anchor="middle" font-size="14" font-weight="bold" fill="#2f855a">rag-mcp-server</text>
+    <text x="285" y="174" text-anchor="middle" font-size="11" fill="#52606d">标准 MCP 工具 stdio/HTTP</text>
+    <text x="285" y="194" text-anchor="middle" font-size="10" fill="#888">鉴权 · 限流 · 探针 · 指标</text>
+    <text x="285" y="214" text-anchor="middle" font-size="10" fill="#b7791f">检索结果注入防护（新增）</text>
+    <text x="285" y="232" text-anchor="middle" font-size="10" fill="#888">search_knowledge / stats</text>
+
+    <!-- hello-agent -->
+    <rect x="430" y="120" width="180" height="120" rx="12" fill="#fff" stroke="#2b6cb0" stroke-width="2"/>
+    <text x="520" y="150" text-anchor="middle" font-size="14" font-weight="bold" fill="#2b6cb0">hello-agent</text>
+    <text x="520" y="172" text-anchor="middle" font-size="11" fill="#52606d">手写 LangGraph ReAct</text>
+    <text x="520" y="188" text-anchor="middle" font-size="11" fill="#52606d">韧性四档 + JSONL trace</text>
+    <text x="520" y="208" text-anchor="middle" font-size="11" fill="#52606d">量化评测 · 断点续跑 · 用量核算</text>
+    <text x="520" y="228" text-anchor="middle" font-size="10" fill="#888">180 passed / 1 skipped</text>
+
+    <!-- rag-eval-platform -->
+    <rect x="430" y="270" width="180" height="70" rx="12" fill="#fff" stroke="#b7791f" stroke-width="2"/>
+    <text x="520" y="296" text-anchor="middle" font-size="14" font-weight="bold" fill="#b7791f">rag-eval-platform</text>
+    <text x="520" y="318" text-anchor="middle" font-size="11" fill="#52606d">六档位实测（含负结果）</text>
+
+    <!-- llm_interview_assistant -->
+    <rect x="700" y="130" width="200" height="120" rx="12" fill="#fff" stroke="#6b46c1" stroke-width="2"/>
+    <text x="800" y="160" text-anchor="middle" font-size="14" font-weight="bold" fill="#6b46c1">llm_interview_assistant</text>
+    <text x="800" y="182" text-anchor="middle" font-size="11" fill="#52606d">Qwen2.5-3B + RAG</text>
+    <text x="800" y="198" text-anchor="middle" font-size="11" fill="#52606d">+ LoRA + 多角色 + 记忆</text>
+    <text x="800" y="218" text-anchor="middle" font-size="11" fill="#52606d">+ 内容安全 · 全本地</text>
+
+    
+<!-- job-fit-assistant（应用落地） -->
+<rect x="700" y="265" width="200" height="85" rx="12" fill="#fff" stroke="#2f855a" stroke-width="2"/>
+<text x="800" y="290" text-anchor="middle" font-size="14" font-weight="bold" fill="#2f855a">job-fit-assistant</text>
+<text x="800" y="310" text-anchor="middle" font-size="11" fill="#52606d">求职助手（应用落地）</text>
+<text x="800" y="327" text-anchor="middle" font-size="10" fill="#888">JD+简历 → 匹配 / 差距 / 面试题</text>
+<text x="800" y="343" text-anchor="middle" font-size="10" fill="#888">61 passed</text>
+
+<!-- tiny-llm-from-scratch（从零训练） -->
+<rect x="700" y="360" width="200" height="80" rx="12" fill="#fff" stroke="#b7791f" stroke-width="2"/>
+<text x="800" y="384" text-anchor="middle" font-size="14" font-weight="bold" fill="#b7791f">tiny-llm-from-scratch</text>
+<text x="800" y="403" text-anchor="middle" font-size="11" fill="#52606d">从零训小模型（无预训练权重）</text>
+<text x="800" y="420" text-anchor="middle" font-size="10" fill="#888">15.59M 参数 · PPL 36.47 · 37 passed</text>
+
+<!-- 指向应用层的虚线 -->
+<line x1="612" y1="190" x2="694" y2="298" stroke="#2f855a" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+<text x="628" y="238" font-size="10" fill="#2f855a">组合三个地基</text>
+
+<!-- arrows -->
+    <line x1="150" y1="180" x2="195" y2="180" stroke="#52606d" stroke-width="1.5" marker-end="url(#ar)"/>
+    <line x1="370" y1="180" x2="425" y2="170" stroke="#52606d" stroke-width="1.5" marker-end="url(#ar)"/>
+    <line x1="520" y1="240" x2="520" y2="265" stroke="#52606d" stroke-width="1.5" marker-end="url(#ar)"/>
+    <text x="400" y="160" text-anchor="middle" font-size="10" fill="#888">MCP 接入</text>
+    <text x="380" y="263" font-size="11" fill="#888">同源检索 / 评测口径</text>
+    <!-- assistant reuse concept -->
+    <line x1="610" y1="150" x2="695" y2="165" stroke="#9b59b6" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+    <text x="630" y="145" font-size="10" fill="#6b46c1">同源 RAG 思想·独立栈</text>
+  </svg>
+  <div class="key">一句话主线：<b>检索（rag-mcp-server）→ 被 Agent 调用（hello-agent）→ 用评测平台量化（rag-eval-platform）</b>；interview-assistant 是同类 RAG 思想的「产品化」落地（本地多角色对话）；<b>job-fit-assistant 是把三个地基「拼成应用」的落点</b>（求职助手）；<b>tiny-llm-from-scratch 是另一条独立支线</b>——不用任何预训练权重，从数据到分词器到训练到评测自己走一遍。</div>
+  <div class="key" style="margin-top:14px">再加一层（本版补齐）：<b>把零件拼成真能用的应用</b>（求职助手：12 份 JD × 4 份简历的客观评测，含「纯 LLM 抽取反而不如关键词基线」这种负结果），<b>并把基本功自己走一遍</b>（从零训一个 15.59M 的小模型，val PPL 36.47，优于 bigram 基线 7.68×）；<b>把服务做成「可运维、可审计」，把 Agent 做成「可中断、可核算」</b>——鉴权 / 限流 / 探针 / 指标 / 注入防护，断点续跑 / 用量与成本；并且每一项都能用<b>一条命令现场跑给你看</b>。</div>
+
+  <h3>本版新补的一层（一句话四个词）</h3>
+  <svg viewBox="0 0 940 150" role="img" aria-label="本版新补的一层">
+    <defs>
+      <marker id="ar7" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <path d="M0,0 L8,3 L0,6 Z" fill="#52606d"/>
+      </marker>
+    </defs>
+    <text x="20" y="20" font-size="12" fill="#52606d">服务层：从「能跑」到「可运维 / 可审计」　　　Agent 层：从「跑得通」到「可中断 / 可核算」</text>
+    <rect x="20" y="38" width="200" height="72" rx="12" fill="#fff" stroke="#2b6cb0" stroke-width="2"/>
+    <text x="120" y="62" text-anchor="middle" font-size="13" font-weight="bold" fill="#2b6cb0">可运维</text>
+    <text x="120" y="82" text-anchor="middle" font-size="11" fill="#52606d">Bearer 鉴权 · 令牌桶限流</text>
+    <text x="120" y="100" text-anchor="middle" font-size="11" fill="#52606d">/healthz · /metrics（零依赖）</text>
+
+    <rect x="250" y="38" width="200" height="72" rx="12" fill="#fff" stroke="#6b46c1" stroke-width="2"/>
+    <text x="350" y="62" text-anchor="middle" font-size="13" font-weight="bold" fill="#6b46c1">可审计</text>
+    <text x="350" y="82" text-anchor="middle" font-size="11" fill="#52606d">检索结果注入标注 13/13</text>
+    <text x="350" y="100" text-anchor="middle" font-size="11" fill="#52606d">命中数进 /metrics</text>
+
+    <rect x="480" y="38" width="200" height="72" rx="12" fill="#fff" stroke="#b7791f" stroke-width="2"/>
+    <text x="580" y="62" text-anchor="middle" font-size="13" font-weight="bold" fill="#b7791f">可中断</text>
+    <text x="580" y="82" text-anchor="middle" font-size="11" fill="#52606d">checkpoint 同 thread_id 续跑</text>
+    <text x="580" y="100" text-anchor="middle" font-size="11" fill="#52606d">重放步数 = 0</text>
+
+    <rect x="710" y="38" width="210" height="72" rx="12" fill="#fff" stroke="#2f855a" stroke-width="2"/>
+    <text x="815" y="62" text-anchor="middle" font-size="13" font-weight="bold" fill="#2f855a">可核算</text>
+    <text x="815" y="82" text-anchor="middle" font-size="11" fill="#52606d">12 次真实运行</text>
+    <text x="815" y="100" text-anchor="middle" font-size="11" fill="#52606d">49,635 tokens / $0.016382</text>
+
+    <line x1="220" y1="74" x2="248" y2="74" stroke="#52606d" stroke-width="1.5" marker-end="url(#ar7)"/>
+    <line x1="450" y1="74" x2="478" y2="74" stroke="#52606d" stroke-width="1.5" marker-end="url(#ar7)"/>
+    <line x1="680" y1="74" x2="708" y2="74" stroke="#52606d" stroke-width="1.5" marker-end="url(#ar7)"/>
+    <text x="20" y="136" font-size="11" fill="#888">图的读法：左边两个词回答「服务能不能上线运维」，右边两个词回答「Agent 挂了要不要从头再跑一遍、花了多少钱」。</text>
+  </svg>
+
+  <h3>本版新增：8 件事，硬证据全是本机实测</h3>
+  <table>
+    <tr><th>新增能力</th><th>硬证据（本机实测）</th></tr>
+    <tr><td>HTTP 生产化 ①：Bearer 鉴权</td><td>无 token → <b>401</b> + <code>WWW-Authenticate</code>；错 token → <b>401</b>；正确 token 通过；常量时间比较；配了 <code>enabled</code> 却没 token → <b>启动即报错</b></td></tr>
+    <tr><td>HTTP 生产化 ②：令牌桶限流（<b>刻意排在鉴权之前</b>）</td><td>burst=10 连打 18 次 → <b>前 10 次 401、后 8 次 429 + <code>Retry-After: 2</code></b>；<b><code>/healthz</code> 是豁免路径，限流期间仍 200</b></td></tr>
+    <tr><td>HTTP 生产化 ③：探针与指标</td><td><code>/healthz</code> 只读快照（<code>index_ready/documents/chunks</code>，<b>绝不触发建索引</b>）；<code>/metrics</code> 手写 Prometheus 文本、<b>零新依赖</b></td></tr>
+    <tr><td>HTTP 压测（20 并发 × 100 请求）</td><td>QPS <b>166.9</b> / p50 <b>95ms</b> / p95 <b>180.5ms</b> / p99 <b>181.9ms</b> / 错误率 <b>0</b>；客户端 160 次 == 服务端 <code>tool_calls_total</code> 增量 <b>160</b></td></tr>
+    <tr><td>提示注入（间接注入）防护：三层</td><td><b>13 类</b>对抗手法全部命中（各带规则 id）；<b>9 篇</b>正常语料零误伤（含 5 篇真实知识库文档）</td></tr>
+    <tr><td>Agent 断点续跑 + 用量核算</td><td>同 <code>thread_id</code> 续跑<b>重放步数 = 0</b>；汇总 <b>12 次运行 / 49,635 tokens / $0.016382</b></td></tr>
+    <tr><td>检索六档位质量 × 延迟实测</td><td>含两个负结果：噪声库上<b>纯 BM25 的 MRR(1.0) 反超混合(0.7708)</b>；<b>HyDE 在噪声库掉点（R@3 1.0→0.75）</b></td></tr>
+    <tr><td>测试与一键门面 / CI 门禁</td><td>五仓库合计 <b>559 passed / 1 skipped</b>（180 + 173 + 108 + 61 + 37）；<code>python demo_all.py</code> <b>9 步 / 实测 119~191 秒</b>（全新克隆实测 119.4s；本机多次 135 / 158 / 178 / 191 秒，波动主要来自 <code>agent-tests</code> 那一步 26↔50 秒）（离线、失败即停；<b>全新克隆先跑 <code>--bootstrap</code> 装依赖</b>，实测 47.8s）；CI 离线可跑（<b>已镜像到 GitHub，Actions 每次 push 自动跑，徽章是真跑结果</b>；<b>Gitee Go 也接了</b>，同一批命令、同一套口径）</td></tr>
+  </table>
+
+  <div class="jump">直达新能力：
+    <a href="#resume">①-1 断点续跑与用量核算</a>
+    <a href="#sixmode">②-1 检索六档位（含负结果）</a>
+    <a href="#ops">③-1 HTTP 生产化</a>
+    <a href="#inject">③-2 提示注入防护</a>
+    <a href="#ci">⑤ CI 与一键门面</a>
+  </div>
+</section>
+
+<section id="agent">
+  <h2>① hello-agent — 最小 ReAct Agent（可逐行讲源码）</h2>
+  <p><span class="tag t-blue">LangGraph</span><span class="tag t-green">韧性</span><span class="tag t-amber">可观测</span><span class="tag t-purple">量化评测</span><span class="tag t-amber">并发 + 记忆 + 压缩</span><span class="tag t-green">断点续跑(新)</span><span class="tag t-blue">用量核算(新)</span></p>
+  <p><b>一句话：</b>用 LangGraph 手写"模型思考 → 调工具 → 看结果 → 再思考"循环，并给循环装上三道工程护栏：<b>最大步数、失败重试/降级/熔断、全链路 JSONL trace</b>。状态只有三个字段，循环只有两个节点。</p>
+
+  <h3>架构图</h3>
+  <svg viewBox="0 0 940 380" role="img" aria-label="hello-agent 架构">
+    <defs>
+      <marker id="ar2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <path d="M0,0 L8,3 L0,6 Z" fill="#52606d"/></marker>
+    </defs>
+    <!-- START -->
+    <circle cx="60" cy="190" r="22" fill="#2b6cb0"/><text x="60" y="195" text-anchor="middle" font-size="12" fill="#fff">START</text>
+    <!-- agent node -->
+    <rect x="120" y="150" width="180" height="80" rx="12" fill="#fff" stroke="#2b6cb0" stroke-width="2"/>
+    <text x="210" y="180" text-anchor="middle" font-size="14" font-weight="bold" fill="#2b6cb0">agent 节点</text>
+    <text x="210" y="200" text-anchor="middle" font-size="11" fill="#52606d">调 LLM + 记录 thought</text>
+    <text x="210" y="218" text-anchor="middle" font-size="10" fill="#888">llm.bind_tools(工具)</text>
+    <!-- route -->
+    <rect x="350" y="170" width="150" height="40" rx="20" fill="#ebf8ff" stroke="#2b6cb0"/>
+    <text x="425" y="194" text-anchor="middle" font-size="11" fill="#1a4971">路由：有工具调用</text>
+    <text x="425" y="210" text-anchor="middle" font-size="10" fill="#888">且 steps&lt;max_steps?</text>
+    <!-- tools node -->
+    <rect x="540" y="150" width="180" height="80" rx="12" fill="#fff" stroke="#2f855a" stroke-width="2"/>
+    <text x="630" y="178" text-anchor="middle" font-size="14" font-weight="bold" fill="#2f855a">tools 节点</text>
+    <text x="630" y="198" text-anchor="middle" font-size="11" fill="#52606d">执行工具 + observation</text>
+    <text x="630" y="216" text-anchor="middle" font-size="10" fill="#888">过执行层(超时/重试)</text>
+    <!-- END -->
+    <circle cx="880" cy="190" r="22" fill="#2f855a"/><text x="880" y="195" text-anchor="middle" font-size="12" fill="#fff">END</text>
+
+    <line x1="82" y1="190" x2="118" y2="190" stroke="#52606d" stroke-width="1.5" marker-end="url(#ar2)"/>
+    <line x1="300" y1="190" x2="348" y2="190" stroke="#52606d" stroke-width="1.5" marker-end="url(#ar2)"/>
+    <line x1="500" y1="190" x2="538" y2="190" stroke="#52606d" stroke-width="1.5" marker-end="url(#ar2)"/>
+    <line x1="720" y1="190" x2="770" y2="190" stroke="#52606d" stroke-width="1.5" marker-end="url(#ar2)"/>
+    <path d="M630,230 C630,310 210,310 210,232" fill="none" stroke="#52606d" stroke-width="1.5" marker-end="url(#ar2)"/>
+    <text x="420" y="300" font-size="10" fill="#888">回到 agent 继续思考</text>
+    <path d="M500,190 C520,90 425,90 425,168" fill="none" stroke="#c53030" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ar2)"/>
+    <text x="540" y="100" font-size="10" fill="#c53030">否 → 收尾 END</text>
+
+    <!-- tools layer -->
+    <g font-size="11">
+      <rect x="540" y="270" width="170" height="86" rx="10" fill="#f0fff4" stroke="#2f855a"/>
+      <text x="625" y="290" text-anchor="middle" font-weight="bold" fill="#2f855a">执行层 resilience</text>
+      <text x="625" y="308" text-anchor="middle" fill="#52606d">超时20s / 重试×3</text>
+      <text x="625" y="324" text-anchor="middle" fill="#52606d">降级 fallback</text>
+      <text x="625" y="340" text-anchor="middle" fill="#52606d">熔断 / 结果限长1200</text>
+      <line x1="630" y1="230" x2="630" y2="268" stroke="#2f855a" stroke-width="1.2"/>
+    </g>
+    <!-- tracer -->
+    <g font-size="11">
+      <rect x="120" y="270" width="180" height="86" rx="10" fill="#fffaf0" stroke="#b7791f"/>
+      <text x="210" y="290" text-anchor="middle" font-weight="bold" fill="#b7791f">观测层 trace</text>
+      <text x="210" y="308" text-anchor="middle" fill="#52606d">一次任务一 JSONL</text>
+      <text x="210" y="324" text-anchor="middle" fill="#52606d">thought/action/obs</text>
+      <text x="210" y="340" text-anchor="middle" fill="#52606d">脱敏 + 指标聚合</text>
+    </g>
+    <!-- tools -->
+    <g font-size="11">
+      <rect x="760" y="270" width="170" height="86" rx="10" fill="#f3efff" stroke="#6b46c1"/>
+      <text x="845" y="290" text-anchor="middle" font-weight="bold" fill="#6b46c1">工具层</text>
+      <text x="845" y="308" text-anchor="middle" fill="#52606d">search_knowledge</text>
+      <text x="845" y="324" text-anchor="middle" fill="#52606d">calculator(AST白名单)</text>
+      <text x="845" y="340" text-anchor="middle" fill="#52606d">current_time(东八区)</text>
+      <line x1="845" y1="230" x2="845" y2="268" stroke="#6b46c1" stroke-width="1.2"/>
+    </g>
+  </svg>
+
+  <h3>关键设计决策（面试加分点）</h3>
+  <table>
+    <tr><th>决策</th><th>为什么</th></tr>
+    <tr><td>手写 StateGraph，不用 <code>create_react_agent</code></td><td>框架封装掉的"步数怎么数 / 错误怎么回灌 / 状态放哪"正是面试考点；手写约 100 行换来确定性与可讲性</td></tr>
+    <tr><td>失败分四档：permanent 不重试 / retryable 退避重试 / 耗尽降级 / 连败熔断</td><td>把"概率性失败"变成确定性处置；未知异常一律按 retryable（多试一次的代价 &lt; 直接放弃）</td></tr>
+    <tr><td>RAG 工具双形态：MCP 客户端优先，连不上降级进程内直连</td><td>进程隔离（BGE 不进 Agent 进程）+ 复用给 Cursor/Claude；两条路径返回同一 JSON 契约，模型无感知</td></tr>
+    <tr><td>trace 一次任务一个 JSONL，密钥永远 <code>sk-****</code></td><td>可回放、可 <code>jq</code> 统计；有测试守着"密钥不泄漏"红线</td></tr>
+  </table>
+
+  <h3>新增：量化评测（把"我跑了 3 条 demo"升级成硬指标）</h3>
+  <div class="key">新增文件（不改既有代码）：<code>agent/eval_harness.py</code> + <code>scripts/eval_agent.py</code> + <code>data/eval_queries.json</code>(16 条) + <code>tests/test_eval_harness.py</code>(4 单测全过)。<br>
+  直接复用 <code>run_task</code> 返回的 <code>metrics</code>（tool_success_rate / 重试 / 降级 / 熔断）并从 trace 抽工具名，聚合成：<b>完成率、平均步数、平均工具成功率、工具选择准确率、失败恢复率、领域外诚实率</b>。其中两处口径是我<b>审计自己指标时改掉的</b>：<b>工具选择准确率拆成严/宽双口径</b>（严＝工具真的成功执行过、宽＝只是发起过——原口径把"尝试过但全失败"也算选对，指标虚高）；<b>领域外诚实率只统计真正完成的运行</b>，并把分母（完成条数 / 领域外总条数）一起报出来——原来的口径会把"模型调用失败、什么都没答出来"的兜底文案当成"诚实拒答"，诚实率能刷到 1.0（典型的假绿，已修并有回归单测锁住）。<br>
+  运行：<code>.venv\Scripts\python.exe scripts\eval_agent.py --rag-mode direct</code>（需 .env 端点）。跑完落 <code>eval_results/eval_*.md</code>。</div>
+
+  <h3>增强：工具并发化 + 跨任务记忆</h3>
+  <svg viewBox="0 0 940 230" role="img" aria-label="工具并发与跨任务记忆">
+    <defs><marker id="ar6" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#52606d"/></marker></defs>
+    <g font-size="12" text-anchor="middle">
+      <!-- 并发 -->
+      <text x="20" y="20" font-size="12" font-weight="bold" fill="#2b6cb0" text-anchor="start">① 同一轮多个 tool_calls → 并发执行</text>
+      <rect x="20" y="38" width="120" height="50" rx="10" fill="#ebf4ff" stroke="#2b6cb0"/>
+      <text x="80" y="60" font-weight="bold" fill="#2b6cb0">3 个调用</text><text x="80" y="78" fill="#52606d">互不依赖</text>
+      <rect x="190" y="28" width="110" height="28" rx="8" fill="#fff" stroke="#2b6cb0"/><text x="245" y="47" fill="#2b6cb0">tool_a</text>
+      <rect x="190" y="63" width="110" height="28" rx="8" fill="#fff" stroke="#2b6cb0"/><text x="245" y="82" fill="#2b6cb0">tool_b</text>
+      <rect x="190" y="98" width="110" height="28" rx="8" fill="#fff" stroke="#2b6cb0"/><text x="245" y="117" fill="#2b6cb0">tool_c</text>
+      <rect x="350" y="48" width="160" height="50" rx="10" fill="#fffaf0" stroke="#b7791f"/>
+      <text x="430" y="70" font-weight="bold" fill="#b7791f">asyncio.gather</text><text x="430" y="88" fill="#52606d">Semaphore(4)</text>
+      <rect x="560" y="48" width="230" height="50" rx="10" fill="#f0fff4" stroke="#2f855a"/>
+      <text x="675" y="70" font-weight="bold" fill="#2f855a">ToolMessage ×3</text><text x="675" y="88" fill="#52606d">顺序 = tool_calls 顺序</text>
+      <line x1="140" y1="55" x2="188" y2="42" stroke="#52606d" marker-end="url(#ar6)"/>
+      <line x1="140" y1="63" x2="188" y2="77" stroke="#52606d" marker-end="url(#ar6)"/>
+      <line x1="140" y1="75" x2="188" y2="112" stroke="#52606d" marker-end="url(#ar6)"/>
+      <line x1="300" y1="42" x2="348" y2="63" stroke="#52606d" marker-end="url(#ar6)"/>
+      <line x1="300" y1="77" x2="348" y2="73" stroke="#52606d" marker-end="url(#ar6)"/>
+      <line x1="300" y1="112" x2="348" y2="83" stroke="#52606d" marker-end="url(#ar6)"/>
+      <line x1="510" y1="73" x2="558" y2="73" stroke="#52606d" marker-end="url(#ar6)"/>
+      <!-- 记忆 -->
+      <text x="20" y="155" font-size="12" font-weight="bold" fill="#6b46c1" text-anchor="start">② 跨任务记忆：显式写入 → 下次任务自动召回注入</text>
+      <rect x="20" y="168" width="120" height="44" rx="10" fill="#f3efff" stroke="#6b46c1"/><text x="80" y="195" fill="#6b46c1">任务 A</text>
+      <rect x="175" y="168" width="150" height="44" rx="10" fill="#fff" stroke="#6b46c1"/><text x="250" y="188" font-weight="bold" fill="#6b46c1">remember_fact</text><text x="250" y="203" fill="#52606d">key / tags</text>
+      <rect x="360" y="168" width="150" height="44" rx="10" fill="#fff" stroke="#b7791f"/><text x="435" y="188" font-weight="bold" fill="#b7791f">JSONL 持久化</text><text x="435" y="203" fill="#52606d">同 key 覆盖</text>
+      <rect x="545" y="168" width="130" height="44" rx="10" fill="#fff" stroke="#6b46c1"/><text x="610" y="195" fill="#6b46c1">任务 B 启动</text>
+      <rect x="710" y="168" width="210" height="44" rx="10" fill="#f0fff4" stroke="#2f855a"/><text x="815" y="188" font-weight="bold" fill="#2f855a">recall top-k</text><text x="815" y="203" fill="#52606d">只注入命中的 → system prompt</text>
+      <line x1="140" y1="190" x2="173" y2="190" stroke="#52606d" marker-end="url(#ar6)"/>
+      <line x1="325" y1="190" x2="358" y2="190" stroke="#52606d" marker-end="url(#ar6)"/>
+      <line x1="510" y1="190" x2="543" y2="190" stroke="#52606d" marker-end="url(#ar6)"/>
+      <line x1="675" y1="190" x2="708" y2="190" stroke="#52606d" marker-end="url(#ar6)"/>
+    </g>
+  </svg>
+  <div class="key"><b>并发化：</b>模型一轮可能同时要「查知识库 + 算数 + 取时间」，串行会把延迟累加。用 <code>asyncio.gather</code> 并发，总延迟 ≈ 最慢的那个；<code>Semaphore</code> 限并发，<code>gather</code> 保序保证 <code>ToolMessage</code> 与 <code>tool_calls</code> 一一对应。<b>实测 4 个 0.2s 工具：并发 0.2s vs 串行 0.8s</b>，有测试断言顺序与耗时。<br>
+  <b>跨任务记忆：</b>单次 <code>messages</code> 任务结束就丢。新增 <code>agent/memory.py</code>：JSONL 落盘、同 key 覆盖、<b>BM25 召回</b>（idf 让稀有词权重更高、b 做文档长度归一化；可切回 overlap 做 A/B）；任务启动只注入与任务相关的 top-k，无重叠不注入；<code>remember_fact</code> 拒绝疑似密钥。<br>
+  <b>上下文压缩：</b>每步送模型前把历史压到字符预算内——<b>只压内容、不删消息</b>，保住 <code>tool_call_id</code> 配对；18 条消息 2643 → 1824 字符（<b>-31%</b>）。<br>
+  在上一轮测试基础上再加 BM25、上下文压缩，以及本版新增的 checkpoint 续跑与用量核算用例后，全量 <b>180 passed / 1 skipped</b>，零回归。离线演示：<code>scripts/demo_memory.py</code>。</div>
+
+  <h3 id="resume" style="margin-top:22px;color:var(--blue)">本版新增：断点续跑（checkpoint）+ 用量与成本核算</h3>
+  <div class="key">把「跑到一半进程被 kill 就白跑」变成<b>可续跑</b>：checkpoint 后端可切——<b>官方 sqlite saver</b> 与<b>自研 JSONL</b> 双后端；命令行 <code>--thread-id</code> 指定会话、<code>--resume</code> 续跑。</div>
+
+  <svg viewBox="0 0 940 300" role="img" aria-label="断点续跑与用量核算">
+    <defs><marker id="ar9" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#52606d"/></marker></defs>
+    <text x="20" y="22" font-size="12" font-weight="bold" fill="#c53030">第 1 次运行：跑到一半，工具执行中进程被 kill（不是"优雅退出"）</text>
+    <rect x="20" y="34" width="170" height="54" rx="10" fill="#f0fff4" stroke="#2f855a"/>
+    <text x="105" y="56" text-anchor="middle" font-size="12" font-weight="bold" fill="#2f855a">step1 ✓ calculator</text>
+    <text x="105" y="76" text-anchor="middle" font-size="11" fill="#52606d">调用 1 次 · 已完成</text>
+    <rect x="215" y="34" width="170" height="54" rx="10" fill="#fff5f5" stroke="#c53030"/>
+    <text x="300" y="56" text-anchor="middle" font-size="12" font-weight="bold" fill="#c53030">step2 ✗ crashy</text>
+    <text x="300" y="76" text-anchor="middle" font-size="11" fill="#52606d">异常逃出 → 进程结束</text>
+    <text x="410" y="66" font-size="11" fill="#888">停在 tools 节点前，没有 observation（trace 里看得到）</text>
+
+    <text x="20" y="124" font-size="12" font-weight="bold" fill="#b7791f">① checkpoint 落盘（持久化的是「状态」，不是副作用）</text>
+    <rect x="20" y="136" width="230" height="50" rx="10" fill="#fffaf0" stroke="#b7791f"/>
+    <text x="135" y="157" text-anchor="middle" font-size="12" font-weight="bold" fill="#b7791f">sqlite（官方 saver）</text>
+    <text x="135" y="175" text-anchor="middle" font-size="11" fill="#52606d">/ 自研 JSONL 双后端</text>
+    <line x1="105" y1="88" x2="115" y2="134" stroke="#b7791f" stroke-width="1.2" marker-end="url(#ar9)"/>
+    <line x1="300" y1="88" x2="200" y2="134" stroke="#b7791f" stroke-width="1.2" marker-end="url(#ar9)"/>
+
+    <text x="20" y="214" font-size="12" font-weight="bold" fill="#2f855a">② 第 2 次运行：同一 thread_id（新进程、新 checkpointer 实例）</text>
+    <rect x="20" y="226" width="230" height="50" rx="10" fill="#fff" stroke="#2f855a"/>
+    <text x="135" y="247" text-anchor="middle" font-size="12" font-weight="bold" fill="#2f855a">只补跑失败的那一步</text>
+    <text x="135" y="265" text-anchor="middle" font-size="11" fill="#52606d">crashy 1 → 2（增量 1）</text>
+    <rect x="280" y="226" width="240" height="50" rx="10" fill="#fff" stroke="#2b6cb0"/>
+    <text x="400" y="247" text-anchor="middle" font-size="12" font-weight="bold" fill="#2b6cb0">收尾：status=completed</text>
+    <text x="400" y="265" text-anchor="middle" font-size="11" fill="#52606d">模型调用 2 → 1 次</text>
+    <rect x="550" y="226" width="370" height="50" rx="10" fill="#ebf8ff" stroke="#2b6cb0"/>
+    <text x="735" y="247" text-anchor="middle" font-size="12" font-weight="bold" fill="#1a4971">重放步数 = 0：calculator 1 → 1 未被重算</text>
+    <text x="735" y="265" text-anchor="middle" font-size="11" fill="#52606d">trace 里有 resume_detected（客观证据，不是口头声明）</text>
+    <line x1="135" y1="186" x2="135" y2="224" stroke="#2f855a" stroke-width="1.2" marker-end="url(#ar9)"/>
+    <line x1="250" y1="161" x2="278" y2="240" stroke="#52606d" stroke-width="1.2" marker-end="url(#ar9)"/>
+    <line x1="520" y1="251" x2="548" y2="251" stroke="#52606d" stroke-width="1.2" marker-end="url(#ar9)"/>
+
+    <text x="20" y="294" font-size="11" fill="#888">一句话讲法：续跑是「新进程读旧状态」，不是内存里重放；所以"重放步数 = 0"是能指 trace 行给人看的。</text>
+  </svg>
+
+  <div class="key"><b>硬证据（<code>scripts/demo_resume.py</code>，离线可复现）：</b>"进程被杀"是用脚本化假模型 + 一个抛 <code>BaseException</code> 的工具造出来的（<code>ToolExecutor</code> 只兜 <code>Exception</code>，所以它直接逃出 <code>run_task</code>，等价于进程结束），然后<b>换一个新的 checkpointer 实例</b>（模拟新进程）用同一个 <code>thread_id</code> 再跑一次。结果：<b>calculator 调用 1→1（没被重放）、只补跑失败的那一步、模型调用 2→1（没把前面两步重算）、最终 status=completed、重放步数 = 0</b>。</div>
+
+  <div class="key"><b>用量与成本核算：</b>扫 trace 重算 token 与费用（单价表可配），实测汇总 <b>12 次真实运行 / 49,635 tokens / $0.016382</b>。<b>这么做的意义：</b>成本任何时刻都能从日志复算——不会出现"账本和日志对不上"，也不需要在代码里到处埋计费变量。</div>
+
+  <div class="note"><b>边界（README 里明写，别改口径）：</b>checkpoint 持久化的是<b>状态</b>，不是副作用。续跑只保证<b>"已完成的工具调用不重放"</b>，<b>工具副作用是 at-least-once，不保证幂等</b>——崩溃窗口里"写文件 / 下单"这类操作仍可能被执行两次。要做到副作用一致，得再加幂等键或"先写意图再执行"的补偿逻辑，那是下一步的事。</div>
+</section>
+
+<section id="eval">
+  <h2>② rag-eval-platform — 模块化 RAG + 系统化评测</h2>
+  <p><span class="tag t-amber">RAG</span><span class="tag t-blue">三层评测</span><span class="tag t-green">策略对比</span></p>
+  <p><b>一句话：</b>把"检索 → 生成 → 评测"三层解耦，每个环节可单独替换、单独度量、单独做对比实验。重点不是"能问答"，而是"能证明答得对不对"。</p>
+
+  <svg viewBox="0 0 940 300" role="img" aria-label="rag-eval-platform 流水线">
+    <defs><marker id="ar3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#52606d"/></marker></defs>
+    <g font-size="12" text-anchor="middle">
+      <rect x="20" y="120" width="120" height="60" rx="10" fill="#fff" stroke="#2b6cb0"/><text x="80" y="145" font-weight="bold" fill="#2b6cb0">文档</text><text x="80" y="165" fill="#52606d">原始文本</text>
+      <rect x="170" y="120" width="120" height="60" rx="10" fill="#fff" stroke="#2b6cb0"/><text x="230" y="142" font-weight="bold" fill="#2b6cb0">切分</text><text x="230" y="162" fill="#52606d">固定/递归/语义</text>
+      <rect x="320" y="120" width="120" height="60" rx="10" fill="#fff" stroke="#2b6cb0"/><text x="380" y="145" font-weight="bold" fill="#2b6cb0">向量化</text><text x="380" y="165" fill="#52606d">BGE + MD5缓存</text>
+      <rect x="470" y="120" width="120" height="60" rx="10" fill="#fff" stroke="#2b6cb0"/><text x="530" y="142" font-weight="bold" fill="#2b6cb0">检索</text><text x="530" y="162" fill="#52606d">余弦+阈值</text>
+      <rect x="620" y="120" width="120" height="60" rx="10" fill="#fff" stroke="#2b6cb0"/><text x="680" y="142" font-weight="bold" fill="#2b6cb0">生成</text><text x="680" y="162" fill="#52606d">Qwen + Prompt</text>
+      <rect x="770" y="120" width="130" height="60" rx="10" fill="#fff" stroke="#2f855a"/><text x="835" y="145" font-weight="bold" fill="#2f855a">回答</text><text x="835" y="165" fill="#52606d">依据来源</text>
+      <line x1="140" y1="150" x2="168" y2="150" stroke="#52606d" marker-end="url(#ar3)"/>
+      <line x1="290" y1="150" x2="318" y2="150" stroke="#52606d" marker-end="url(#ar3)"/>
+      <line x1="440" y1="150" x2="468" y2="150" stroke="#52606d" marker-end="url(#ar3)"/>
+      <line x1="590" y1="150" x2="618" y2="150" stroke="#52606d" marker-end="url(#ar3)"/>
+      <line x1="740" y1="150" x2="768" y2="150" stroke="#52606d" marker-end="url(#ar3)"/>
+    </g>
+    <!-- eval band -->
+    <rect x="20" y="220" width="880" height="60" rx="10" fill="#fffaf0" stroke="#b7791f"/>
+    <text x="40" y="244" font-size="13" font-weight="bold" fill="#b7791f">三层评测</text>
+    <text x="40" y="266" font-size="12" fill="#52606d">检索层：Recall@K / Precision / MRR　|　生成层：LLM-as-Judge（faithfulness/relevance/completeness）　|　传统层：BLEU / ROUGE-L</text>
+  </svg>
+
+  <div class="note"><b>诚实标注的边界（必讲）：</b>自带样例只有 5 篇文档，三种切分策略的文档级 recall@3 全部 1.0——这是"数据集太小导致的天花板效应"，不是"某策略最优"。实验报告里已如实写明，并给出扩到更大评测集的建议。面试被追问"为什么不选最优"时，这个回答比硬编结论更可信。</div>
+
+  <h3 style="margin-top:18px;color:var(--blue)">②-增强：混合检索（BM25 + 向量 RRF + 可选重排）</h3>
+  <div class="key">把"纯向量"升级为"双路召回 + 排名融合"。这不是炫技——是为了解决纯向量在<b>近义/重复文档</b>上把分数分散到多个副本、导致相关文档排不到前面的真实痛点。</div>
+
+  <svg viewBox="0 0 940 250" role="img" aria-label="混合检索架构">
+    <defs><marker id="arh" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#52606d"/></marker></defs>
+    <g font-size="12" text-anchor="middle">
+      <!-- query -->
+      <rect x="20" y="95" width="120" height="52" rx="10" fill="#ebf4ff" stroke="#2b6cb0"/><text x="80" y="118" font-weight="bold" fill="#2b6cb0">Query</text><text x="80" y="135" fill="#52606d">用户问题</text>
+      <!-- vector branch -->
+      <rect x="180" y="25" width="150" height="50" rx="10" fill="#fff" stroke="#2b6cb0"/><text x="255" y="48" font-weight="bold" fill="#2b6cb0">BGE 向量化</text><text x="255" y="65" fill="#52606d">语义编码</text>
+      <rect x="370" y="25" width="150" height="50" rx="10" fill="#fff" stroke="#2b6cb0"/><text x="445" y="48" font-weight="bold" fill="#2b6cb0">向量余弦检索</text><text x="445" y="65" fill="#52606d">语义召回</text>
+      <!-- bm25 branch -->
+      <rect x="180" y="160" width="150" height="50" rx="10" fill="#fff" stroke="#b7791f"/><text x="255" y="183" font-weight="bold" fill="#b7791f">中文分词</text><text x="255" y="200" fill="#52606d">字+二元组</text>
+      <rect x="370" y="160" width="150" height="50" rx="10" fill="#fff" stroke="#b7791f"/><text x="445" y="183" font-weight="bold" fill="#b7791f">BM25 检索</text><text x="445" y="200" fill="#52606d">关键词召回</text>
+      <!-- fusion -->
+      <rect x="560" y="95" width="160" height="56" rx="10" fill="#fffaf0" stroke="#b7791f"/><text x="640" y="118" font-weight="bold" fill="#b7791f">RRF 融合</text><text x="640" y="135" fill="#52606d">Σ 1/(k+rank)</text>
+      <!-- rerank -->
+      <rect x="760" y="95" width="160" height="56" rx="10" fill="#fff" stroke="#2f855a" stroke-dasharray="5,4"/><text x="840" y="116" font-weight="bold" fill="#2f855a">Cross-Encoder</text><text x="840" y="133" fill="#52606d">重排（可选）</text>
+      <!-- arrows -->
+      <line x1="140" y1="110" x2="178" y2="60" stroke="#52606d" marker-end="url(#arh)"/>
+      <line x1="140" y1="125" x2="178" y2="185" stroke="#52606d" marker-end="url(#arh)"/>
+      <line x1="330" y1="50" x2="368" y2="50" stroke="#52606d" marker-end="url(#arh)"/>
+      <line x1="330" y1="185" x2="368" y2="185" stroke="#52606d" marker-end="url(#arh)"/>
+      <line x1="520" y1="50" x2="558" y2="115" stroke="#52606d" marker-end="url(#arh)"/>
+      <line x1="520" y1="185" x2="558" y2="125" stroke="#52606d" marker-end="url(#arh)"/>
+      <line x1="720" y1="123" x2="758" y2="123" stroke="#52606d" marker-end="url(#arh)"/>
+    </g>
+    <rect x="20" y="222" width="900" height="22" rx="6" fill="#f0fff4"/>
+    <text x="30" y="237" font-size="11" fill="#2f855a">实测：噪声近义语料上 纯向量 Recall@3=0.625 → 混合检索=1.0（MRR 0.48→0.77）；干净 14 篇库上两者均接近上限，混合收益有限（如实标注）。</text>
+  </svg>
+
+  <div class="note"><b>怎么讲这坨（STAR）：</b>"纯向量检索对精确术语和近义副本不敏感。我加了 BM25 关键词路 + 向量语义路<b>双路召回</b>，用 <b>RRF（按排名融合，而非加权求和，因为两路分数量纲不同）</b>合并，并可接 <b>Cross-Encoder 重排</b>二次精排。为证明有效，我搭了两个评测集做对照：干净知识库上两者都接近上限，<b>但含近义副本的噪声语料上，纯向量 recall@3 只有 0.625、混合拉到 1.0</b>——这正好说明'何时该上混合检索'。用 <code>retrieval.mode</code> 开关切换，默认纯向量保证零回归。"</div>
+
+  <h3 id="sixmode" style="margin-top:22px;color:var(--amber)">本版新增：六档位实测（质量 × 延迟，含负结果）</h3>
+  <div class="key">把 <b>纯向量 / 纯 BM25 / 混合 RRF / +重排 / +multi-query / +HyDE</b> 六个档位在同一口径下跑完（<b>文档级</b> Recall@3 / MRR，延迟是单次 <code>_retrieve</code> 的热启动 p50，不含生成回答），并把<b>延迟一起记账</b>。评测集两套：<code>realistic</code>（14 篇，话题区分度大）与 <code>near_dup_stress</code>（10 篇，含大量近义副本的噪声库）。</div>
+
+  <p class="big" style="margin:14px 0 4px"><b>数据集 A：<code>realistic</code></b>（14 篇，话题区分度大）</p>
+  <table>
+    <tr><th>档位</th><th>R@3</th><th>MRR</th><th>热 p50</th></tr>
+    <tr><td>纯向量（基线）</td><td>1.0</td><td>0.9286</td><td>0.62ms</td></tr>
+    <tr><td>纯 BM25 关键词</td><td>1.0</td><td>0.8929</td><td>2.07ms</td></tr>
+    <tr><td>混合 BM25+向量 · RRF</td><td>1.0</td><td>0.9286</td><td>2.38ms</td></tr>
+    <tr><td>混合 + Cross-Encoder 重排</td><td>1.0</td><td><b>1.0</b></td><td>995ms</td></tr>
+    <tr><td>混合 + multi-query 改写</td><td>1.0</td><td>0.9524</td><td>1.6s</td></tr>
+    <tr><td>混合 + HyDE 改写</td><td>1.0</td><td>0.9286</td><td><b>12.6s</b></td></tr>
+  </table>
+
+  <p class="big" style="margin:18px 0 4px"><b>数据集 B：<code>near_dup_stress</code></b>（10 篇，含大量近义副本的噪声库）</p>
+  <table>
+    <tr><th>档位</th><th>R@3</th><th>MRR</th><th>热 p50</th></tr>
+    <tr><td>纯向量（基线）</td><td>0.625</td><td>0.4792</td><td>0.4ms</td></tr>
+    <tr><td>纯 BM25 关键词</td><td><b>1.0</b></td><td><b>1.0</b></td><td>0.46ms</td></tr>
+    <tr><td>混合 BM25+向量 · RRF</td><td>1.0</td><td>0.7708</td><td>0.43ms</td></tr>
+    <tr><td>混合 + Cross-Encoder 重排</td><td>1.0</td><td><b>1.0</b></td><td>74ms</td></tr>
+    <tr><td>混合 + multi-query 改写</td><td>1.0</td><td>0.8333</td><td>1.2s</td></tr>
+    <tr><td>混合 + HyDE 改写</td><td><b>0.75</b></td><td>0.7375</td><td>5.6s</td></tr>
+  </table>
+  <p style="color:var(--sub);font-size:13px;margin:6px 0">口径备注：延迟为单机实测的热启动 p50（含查询编码 + 检索 + 重排/改写，不含生成回答），重排与改写档位存在运行间波动，<b>量级可信、具体数字不宜当基准线</b>；质量指标（Recall / MRR）是确定性的、可复现。</p>
+
+  <div class="note"><b>两个必须主动讲的诚实结论（负结果比正结果更能证明会做实验）：</b>
+    <ul>
+      <li><b>① 多路召回不等于更好：</b>噪声库上<b>纯 BM25 的 MRR = 1.0，反而高于混合 RRF 的 0.7708</b>——混合把召回拉满了，但 RRF 按排名融合会牺牲头部精度；换句话说，"上一路 BM25"在近义副本场景里本身就够了，加向量的融合规则反而是负优化。</li>
+      <li><b>② HyDE 在噪声库掉点：</b>R@3 <b>1.0 → 0.75</b>，而热 p50 从毫秒级涨到 5.6s（约 <b>×13000</b>）——改写收益<b>依赖生成模型质量</b>，小模型生成的"假想文档"会把噪声一起召回。</li>
+      <li><b>所以：</b>重排 / 查询改写做成<b>默认关、按场景开</b>——收益不确定（干净库上召回满分时它只能改排序），代价确定（延迟 ×百倍）。开之前先问一句"召回还有没有提升空间"。</li>
+    </ul>
+  </div>
+
+  <div class="key"><b>怎么讲（一句话版）：</b>"我把检索的六个档位在同一口径下跑了一遍，并且<b>把延迟一起记账</b>：+重排能把 MRR 从 0.9286 顶到 1.0，但要花 995ms；HyDE 在干净库上没有收益、在噪声库上反而掉到 0.75 且延迟 12.6s。所以我把它做成默认关——<b>能证明"什么时候不该用"，比只会说"我上了高级技巧"更值钱</b>。"</div>
+</section>
+
+<section id="judge">
+  <h2>②-2 · 我不猜，我测了 —— 本地 1.5B 能不能当评测裁判</h2>
+  <p><span class="tag t-amber">实测</span><span class="tag t-blue">三方对照</span><span class="tag t-green">零成本规则主干</span><span class="tag t-red">负结果</span><span class="tag t-purple">可复现</span></p>
+  <p><b>一句话：</b>仓库里早就有"让本地小模型当 LLM-as-Judge"的实现和文档宣称，但<b>一个实测数字都没有</b>。这一节把它补上：<b>同一批 33 条样本 + 同一份检索上下文 + 同一份 rubric</b>，让<b>规则判据 / 本地 Qwen2.5-1.5B 自评 / 强裁判 API</b> 三方各判一遍，再比它们彼此有多一致。结论先说：<b>本地 1.5B 在这个任务上不适合作裁判</b>——与强裁判几乎零相关（r −0.0326）、MAE 1.8182，而且偏差是<b>系统性的中庸化回归</b>，它能胜任的只是<b>两端粗筛</b>。反过来，<b>零成本的规则判据比它更贴近强裁判</b>（r +0.5890、MAE 0.9152）。</p>
+
+  <div class="note"><b>为什么这条值得花时间修：</b>它原本属于典型的「<b>有实现、有文档宣称、零实测数字、零测试覆盖</b>」——代码能跑、README 写着支持三维打分，可面试官一句"faithfulness 多少分"就答不上来。修它的价值不在于"多一个功能"，而在于<b>把一句宣称换成一次测量</b>：现在它有数字、有口径、有边界，还能离线复跑。</div>
+
+  <div class="stats">
+    <div class="stat red"><b>0.2121</b><span>B vs C 精确一致<br>（本地自评 vs 强裁判）</span></div>
+    <div class="stat red"><b>−0.0326</b><span>B vs C 皮尔逊 r<br>（几乎零相关）</span></div>
+    <div class="stat green"><b>0.9152</b><span>A vs C 平均绝对误差<br>（越小越好）</span></div>
+    <div class="stat amber"><b>1.8182</b><span>B vs C 平均绝对误差<br>（本地 1.5B）</span></div>
+  </div>
+  <p style="color:var(--sub);font-size:13px;margin:2px 0 0">A = 规则判据（零成本、确定性）· B = 本地 <code>Qwen2.5-1.5B-Instruct</code> 自评（判分模型＝生成模型，同权重）· C = 强裁判 API（<code>deepseek-chat</code>，一次调用返回三维 JSON）。以下所有数字都出自同一批 <b>33 条</b>样本（27 条原金标 + 6 条本次新造的拒答样本），答案为 <code>temperature=0</code> 贪心生成。</p>
+
+  <h3>三臂怎么摆，差距落在哪（faithfulness 维度）</h3>
+  <svg viewBox="0 0 940 350" role="img" aria-label="三臂裁判对照">
+    <defs><marker id="arJ" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#52606d"/></marker></defs>
+    <text x="20" y="20" font-size="12" fill="#52606d">同一批 33 条样本 · 同一份检索上下文 · 同一份 rubric —— 三个"裁判"各判一遍，再比它们彼此有多一致</text>
+
+    <rect x="20" y="104" width="150" height="116" rx="10" fill="#eef2f7" stroke="#2b6cb0"/>
+    <text x="95" y="128" text-anchor="middle" font-size="13" font-weight="bold" fill="#2b6cb0">33 条样本</text>
+    <text x="95" y="150" text-anchor="middle" font-size="11" fill="#52606d">27 条原金标</text>
+    <text x="95" y="168" text-anchor="middle" font-size="11" fill="#52606d">6 条新造拒答</text>
+    <text x="95" y="190" text-anchor="middle" font-size="10" fill="#888">答案由本地</text>
+    <text x="95" y="204" text-anchor="middle" font-size="10" fill="#888">1.5B 贪心生成</text>
+
+    <rect x="220" y="44" width="320" height="72" rx="10" fill="#fff" stroke="#2f855a" stroke-width="2"/>
+    <text x="236" y="66" font-size="12" font-weight="bold" fill="#2f855a">臂 A · 规则判据（零成本 · 确定性）</text>
+    <text x="236" y="86" font-size="11" fill="#52606d">数字/实体落地率 · 句子归因（2-gram 覆盖 ≥ 0.6）</text>
+    <text x="236" y="104" font-size="11" fill="#52606d">拒答判定 · EM/F1/ROUGE-L/BLEU → 1–5 粗分</text>
+
+    <rect x="220" y="126" width="320" height="72" rx="10" fill="#fff" stroke="#c53030" stroke-width="2"/>
+    <text x="236" y="148" font-size="12" font-weight="bold" fill="#c53030">臂 B · 本地 Qwen2.5-1.5B 自评</text>
+    <text x="236" y="168" font-size="11" fill="#52606d">判分模型 = 生成模型（同一份权重）</text>
+    <text x="236" y="186" font-size="11" fill="#52606d">temperature=0 · 按同一份 rubric 打 1–5</text>
+
+    <rect x="220" y="208" width="320" height="72" rx="10" fill="#fff" stroke="#2b6cb0" stroke-width="2"/>
+    <text x="236" y="230" font-size="12" font-weight="bold" fill="#2b6cb0">臂 C · 强裁判 API（deepseek-chat）</text>
+    <text x="236" y="250" font-size="11" fill="#52606d">一次调用返回三维 JSON</text>
+    <text x="236" y="268" font-size="11" fill="#52606d">temperature=0（参照系，不是真值）</text>
+
+    <rect x="600" y="44" width="320" height="72" rx="10" fill="#f0fff4" stroke="#2f855a"/>
+    <text x="616" y="66" font-size="11" font-weight="bold" fill="#2f855a">A vs C：MAE 0.9152 · r +0.5890</text>
+    <text x="616" y="86" font-size="11" fill="#52606d">精确一致 0.5455 · ±1 一致 0.7576</text>
+    <text x="616" y="104" font-size="10" fill="#888">零成本，却能跟上强裁判的排序</text>
+
+    <rect x="600" y="126" width="320" height="72" rx="10" fill="#fff5f5" stroke="#c53030"/>
+    <text x="616" y="148" font-size="11" font-weight="bold" fill="#c53030">B vs C：MAE 1.8182 · r −0.0326</text>
+    <text x="616" y="168" font-size="11" fill="#52606d">精确一致 0.2121 · ±1 一致 0.4848</text>
+    <text x="616" y="186" font-size="10" fill="#888">几乎零相关：排序信息基本对不上</text>
+
+    <rect x="600" y="208" width="320" height="72" rx="10" fill="#fffaf0" stroke="#b7791f"/>
+    <text x="616" y="230" font-size="11" font-weight="bold" fill="#b7791f">整轮成本 ¥0.0232（预算上限 ¥0.5）</text>
+    <text x="616" y="250" font-size="11" fill="#52606d">29 次新调用 + 4 次缓存命中</text>
+    <text x="616" y="268" font-size="10" fill="#888">19,248 tokens 入 / 638 tokens 出</text>
+
+    <line x1="170" y1="140" x2="218" y2="80" stroke="#52606d" stroke-width="1.5" marker-end="url(#arJ)"/>
+    <line x1="170" y1="162" x2="218" y2="162" stroke="#52606d" stroke-width="1.5" marker-end="url(#arJ)"/>
+    <line x1="170" y1="184" x2="218" y2="244" stroke="#52606d" stroke-width="1.5" marker-end="url(#arJ)"/>
+    <line x1="540" y1="80" x2="598" y2="80" stroke="#52606d" stroke-width="1.5" marker-end="url(#arJ)"/>
+    <line x1="540" y1="162" x2="598" y2="162" stroke="#52606d" stroke-width="1.5" marker-end="url(#arJ)"/>
+    <line x1="540" y1="244" x2="598" y2="244" stroke="#52606d" stroke-width="1.5" marker-end="url(#arJ)"/>
+
+    <rect x="20" y="296" width="900" height="40" rx="8" fill="#fff5f5" stroke="#c53030"/>
+    <text x="36" y="321" font-size="12" fill="#742a2a">结论：零成本规则判据比本地 1.5B 更贴近强裁判（MAE 0.9152 vs 1.8182）——"能不能当裁判"是测出来的，不是猜出来的。</text>
+  </svg>
+
+  <table>
+    <tr><th>对照（faithfulness 维度）</th><th>精确一致</th><th>±1 一致</th><th>MAE</th><th>Pearson r</th></tr>
+    <tr><td>臂 B · 本地 1.5B 自评　vs　臂 C 强裁判<span class="mini">判分模型＝生成模型，同一份权重</span></td><td>0.2121</td><td>0.4848</td><td>1.8182</td><td><b style="color:var(--red)">−0.0326</b></td></tr>
+    <tr><td>臂 A · 规则判据　vs　臂 C 强裁判<span class="mini">零成本、确定性、可进 CI 门禁</span></td><td><b>0.5455</b></td><td><b>0.7576</b></td><td><b>0.9152</b></td><td><b style="color:var(--green)">+0.5890</b></td></tr>
+  </table>
+  <p style="color:var(--sub);font-size:13px;margin:6px 0">读法：精确一致 = 分数完全相同；±1 一致 = 差一分以内；MAE 越小越好，r 越接近 1 越好。<b>只报平均分会骗自己</b>——中庸化的裁判"看起来均分还行"，但排序信息已经丢了，所以必须看 r，并且按档位分段看。</p>
+
+  <p style="color:var(--sub);font-size:13px;margin:14px 0 4px"><b>支撑检查（这条不改变上面的主结论）：</b>同一口径在另外两个维度上再算一遍——<b>臂 B vs 臂 C，n = 33</b>，看"零相关"是不是 faithfulness 一个维度的偶然。</p>
+  <table style="margin-top:4px;font-size:13px">
+    <tr><th>维度（臂 B 本地 1.5B vs 臂 C 强裁判，n = 33）</th><th>精确一致</th><th>±1 一致</th><th>MAE</th><th>Pearson r</th></tr>
+    <tr><td>relevance<span class="mini">回答是否切题</span></td><td>0.2727</td><td>0.3636</td><td>1.7879</td><td><b style="color:var(--red)">+0.0966</b></td></tr>
+    <tr><td>completeness<span class="mini">要点是否覆盖全</span></td><td>0.1818</td><td>0.5455</td><td>1.6667</td><td><b style="color:var(--red)">−0.0557</b></td></tr>
+  </table>
+  <p style="color:var(--sub);font-size:13px;margin:6px 0 0">连上主表的 faithfulness（<b>−0.0326</b>）：<b>三个维度的 Pearson r 全部落在 |r| &lt; 0.1</b>——"几乎零相关"不是某一个维度的偶然，而是<b>三个维度上一致出现的现象</b>；三个维度的 <b>MAE 都在 1.67–1.82</b>（1–5 量表上，平均差接近两档），<b>连偏差幅度都一致</b>。<br>
+  <b>边界（别顺手扩大）：</b>臂 A 只有 <b>faithfulness</b> 有 1–5 粗分，另两维是 EM/F1/ROUGE 这类<b>词法指标、量纲不同</b>，所以 <b>A vs C 只对 faithfulness 有意义</b>——另外两维没有 A 的相关系数可报；而且这依旧是<b>两裁判一致性</b>，不是与人类标注对齐，强裁判本身也不是真值。</p>
+
+  <h3>为什么"零相关"不是随机抖动，而是系统性的中庸化回归</h3>
+  <svg viewBox="0 0 940 292" role="img" aria-label="本地裁判的中庸化回归">
+    <text x="20" y="20" font-size="12" fill="#52606d">同一个维度（faithfulness）按强裁判档位分段：本地裁判的偏差不是抖动，而是把两端都推向中间</text>
+
+    <rect x="180" y="30" width="22" height="10" fill="#ebf4ff" stroke="#2b6cb0"/>
+    <text x="208" y="39" font-size="11" fill="#52606d">强裁判（臂 C）</text>
+    <rect x="420" y="30" width="22" height="10" fill="#fff5f5" stroke="#c53030"/>
+    <text x="448" y="39" font-size="11" fill="#52606d">本地 1.5B（臂 B）</text>
+
+    <text x="20" y="72" font-size="11" font-weight="bold" fill="#52606d">低档 1–2 · n=6</text>
+    <line x1="600" y1="30" x2="600" y2="222" stroke="#c53030" stroke-width="1" stroke-dasharray="4 4"/>
+    <rect x="180" y="56" width="233" height="24" fill="#ebf4ff" stroke="#2b6cb0"/>
+    <text x="421" y="73" font-size="11" fill="#2b6cb0">1.667</text>
+    <rect x="180" y="92" width="443" height="24" fill="#fff5f5" stroke="#c53030"/>
+    <text x="631" y="109" font-size="11" fill="#c53030">3.167</text>
+
+    <text x="20" y="160" font-size="11" font-weight="bold" fill="#52606d">高档 4–5 · n=27</text>
+    <rect x="180" y="144" width="679" height="24" fill="#ebf4ff" stroke="#2b6cb0"/>
+    <text x="867" y="161" font-size="11" fill="#2b6cb0">4.852</text>
+    <rect x="180" y="180" width="435" height="24" fill="#fff5f5" stroke="#c53030"/>
+    <text x="623" y="197" font-size="11" fill="#c53030">3.111</text>
+
+    <text x="600" y="18" text-anchor="middle" font-size="10" fill="#c53030">3 分</text>
+
+    <line x1="180" y1="222" x2="880" y2="222" stroke="#d9e2ec"/>
+    <g font-size="10" fill="#52606d" text-anchor="middle">
+      <line x1="180" y1="222" x2="180" y2="227" stroke="#d9e2ec"/><text x="180" y="240">0</text>
+      <line x1="320" y1="222" x2="320" y2="227" stroke="#d9e2ec"/><text x="320" y="240">1</text>
+      <line x1="460" y1="222" x2="460" y2="227" stroke="#d9e2ec"/><text x="460" y="240">2</text>
+      <line x1="600" y1="222" x2="600" y2="227" stroke="#d9e2ec"/><text x="600" y="240">3</text>
+      <line x1="740" y1="222" x2="740" y2="227" stroke="#d9e2ec"/><text x="740" y="240">4</text>
+      <line x1="880" y1="222" x2="880" y2="227" stroke="#d9e2ec"/><text x="880" y="240">5</text>
+    </g>
+    <text x="20" y="264" font-size="11" fill="#742a2a">读法：低档被抬高（1.667 → 3.167）、高档被压低（4.852 → 3.111）——两端都往 3 分收，所以 r 趋近 0，但偏差有方向。</text>
+    <text x="20" y="284" font-size="11" fill="#888">边界：中档 (3) 的样本数 n=0 → 中间档的区分力无法评估（如实标注）；本地 1.5B 的用途因此只剩"两端粗筛"。</text>
+  </svg>
+
+  <div class="hl"><b>最该抓的样本，被放行了：</b><code>unanswerable#2</code> —— 问题在知识库里没有答案，正确答案就是"不知道"，模型却编了一份川菜菜谱。<b>本地裁判给 faithfulness / relevance / completeness = 3 / 5 / 3，强裁判给 1 / 1 / 1</b>：三个维度全被判成"及格"。这就是中庸化回归的真实代价——<b>它不会说"这条错得离谱"，只会说"还凑合"</b>；而 RAG 的幻觉恰恰要靠"离谱"这个信号才拦得住。</div>
+
+  <div class="key"><b>方法论：结论不是"我觉得 1.5B 不行"，而是三件事</b>
+    <ul>
+      <li><b>同批样本、同 rubric、同上下文：</b>33 条样本、三臂共用同一份检索上下文，答案由 <code>Qwen2.5-1.5B-Instruct</code> 在 <code>temperature=0</code> 下贪心生成——换个人回来跑，拿到的是同一批答案，比较才有意义。</li>
+      <li><b>算一致率矩阵，而不是各打各的分：</b>精确一致 / ±1 一致 / MAE / Pearson r 四个口径一起看。只报"平均分"最容易被中庸化骗过去：均分能对上，排序全反了。</li>
+      <li><b>确定性规则打主干，强裁判只做交叉验证：</b>规则判据（数字/实体落地率、句子归因的字符 2-gram 覆盖率 ≥ 0.6、拒答判定、EM/F1/ROUGE-L/BLEU → 1–5 粗分）零成本、可重复，<b>能进 CI 门禁、每次提交都跑</b>；强裁判只在这 33 条上做对照，<b>整轮 ¥0.0232</b>。贵的只用来校准便宜的，不让它变成日常依赖。</li>
+    </ul>
+  </div>
+
+  <div class="key"><b>成本与可复现（这两条是"敢报数"的前提）：</b><b>29 次新调用 + 4 次缓存命中</b>，输入 <b>19,248 tokens</b> / 输出 <b>638 tokens</b>，合计 <b>¥0.0232</b>；<b>预算硬上限 ¥0.5</b>，超了就停——省钱靠代码，不靠"记得省着点"。<br>
+  <b>贪婪解码 + 磁盘缓存</b>，离线复跑<b>逐条一致、不一致数 0</b>：这组数字不是"某天跑出来的样子"，而是谁都能重跑出来的结果。</div>
+
+  <div class="note"><b>能力证据的诚实边界（这段必须照实讲）：</b>
+    <ul>
+      <li><b>人类标注只有 5 条</b>，且只用来<b>校准规则阈值</b>——它不构成"与人类对齐"的评测。</li>
+      <li><b>规则判据已知 5 类误判：</b>改述但无字面重叠 → 误判"未归因"；模板化句式 → 误判"已归因"；落地率只看"出现过"、不看"用对"；拒答是字面标记匹配；1–5 本身是粗映射。</li>
+      <li><b>只做了两裁判一致性</b>，不是与人类标注对齐；<b>强裁判本身也不是真值</b>，它只是更贵的参照系。</li>
+      <li><b>本节所有数字都是每样本单次调用（N=1）</b>；<b>N&gt;1 已于 2026-10-20 补测（N=7）</b>：单个「样本 × 维度」的抽样标准差约 <b>0.41 档</b>（faithfulness；relevance 0.32、completeness 0.29），7 次采样只有 <b>38.4%</b> 完全一致、99 个单元里有 24 个摆动 2 档（这是 7 次全同的口径，观测次数更多、标准更严，<b>不能和下面 N=3 的 71.7% 直接相减</b>）；中位数聚合把 MAE 的抽样 sd 从 <b>0.087</b> 压到 <b>0.062</b>（N=7，−29%；N=3 只降 14%），但<b>结论方向不变</b>——median-of-7 下 r = <b>−0.1436</b>、MAE = <b>1.9394</b>，仍近零相关、仍远差于零成本规则臂的 0.9152，且 <code>unanswerable#2</code> 的 faithfulness 反而从 3 抬到 4。所以这组数字有<b>量级意义</b>，但<b>没有小数点后四位的精度</b>。</li>
+      <li><b>参照系本身也做过稳健性检验（2026-10-20，强裁判 API 侧 N=3）</b>：上面所有结论都是拿"单次调用的强裁判"当参照系算的——如果参照系自己在飘，结论就得打折。所以我把强裁判也跑了 <b>N=3</b>（<b>99 次新调用、¥0.0777</b>、零兜底、答案与原批次逐条相同），用 3 次采样的<b>中位数</b>当新参照系重算：本地 1.5B 仍是近零相关（r <b>−0.1595</b>、MAE <b>1.9394</b>），零成本规则判据仍明显更贴近（r <b>+0.5485</b>、MAE <b>1.0061</b>），"中庸化回归"依旧成立（判低组本地 3.400 vs 参照 1.400、判高组 3.037 vs 4.889）。同时实测到<b>强裁判不是零噪声</b>：3 次采样只有 <b>71.7%</b> 完全一致、99 个单元里有 <b>3 个</b>摆动 ≥3 档（严格同 N 的对照：同一次运行里本地裁判 N=3 时是 <b>55.6%</b>）；但它与自己 N=1 参照的 MAE 只有 <b>0.11</b> 档、r <b>+0.92</b> —— 所以<b>两个裁判的分歧不是参照系噪声造成的</b>。</li>
+      <li><b>中档 (3) 的样本数 n=0</b>，中间档的区分力<b>无法评估</b>（如实标注，不假装测过）。</li>
+    </ul>
+  </div>
+
+  <div class="key"><b>怎么讲（一句话版）：</b>"我不猜，我测了——同一批 33 条样本、同一份 rubric，把规则判据、本地 1.5B 自评、强裁判摆在一起对照：<b>本地 1.5B 的 faithfulness 与强裁判几乎零相关（r −0.0326、MAE 1.8182）</b>，而且不是抖动、是<b>中庸化回归</b>——低档 6 条被抬到 3.167（强裁判 1.667）、高档 27 条被压到 3.111（强裁判 4.852），最该抓的拒答样本被判成 3/5/3。<b>而且我把参照系本身也换成 3 次采样的中位数重算了一遍，主结论照样不变</b>（本地 r −0.1595 / MAE 1.9394，规则臂 r +0.5485 / MAE 1.0061）——分歧不是参照系噪声造成的。<b>反倒是零成本的规则判据更贴近强裁判（r +0.5890、MAE 0.9152）</b>。所以我的结论是<b>分工</b>：规则判据进 CI 当主干，强裁判只做小样本交叉验证（整轮 ¥0.0232），本地 1.5B 只用于两端粗筛。这不是"1.5B 不行"，是<b>位置放错了</b>。"</div>
+</section>
+
+<section id="mcp">
+  <h2>③ rag-mcp-server — 把检索封装成标准 MCP 服务</h2>
+  <p><span class="tag t-green">MCP</span><span class="tag t-blue">stdio + HTTP</span><span class="tag t-amber">可复用</span><span class="tag t-red">鉴权 + 限流(新)</span><span class="tag t-purple">注入防护(新)</span><span class="tag t-blue">/healthz + /metrics(新)</span></p>
+  <p><b>一句话：</b>用官方 MCP SDK 把同一套 RAG 检索链路暴露成标准工具，本地用 stdio、远程用 Streamable HTTP，Claude Desktop / Cursor / 自己的 Agent 都能直接调用，一次实现处处复用。<b>本版再补上"能给别人用"的那一层：鉴权 / 限流 / 探针 / 指标 / 检索结果注入防护。</b></p>
+
+  <svg viewBox="0 0 940 300" role="img" aria-label="rag-mcp-server 架构">
+    <defs><marker id="ar4" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#52606d"/></marker></defs>
+    <g font-size="12" text-anchor="middle">
+      <rect x="20" y="60" width="150" height="50" rx="10" fill="#fff" stroke="#6b46c1"/><text x="95" y="90" fill="#6b46c1">Claude Desktop</text>
+      <rect x="20" y="130" width="150" height="50" rx="10" fill="#fff" stroke="#6b46c1"/><text x="95" y="160" fill="#6b46c1">Cursor</text>
+      <rect x="20" y="200" width="150" height="50" rx="10" fill="#fff" stroke="#6b46c1"/><text x="95" y="222" fill="#6b46c1">hello-agent</text>
+      <text x="95" y="278" font-size="10" fill="#888">MCP 客户端 / 宿主</text>
+    </g>
+    <rect x="360" y="120" width="220" height="80" rx="12" fill="#fff" stroke="#2f855a" stroke-width="2"/>
+    <text x="470" y="150" text-anchor="middle" font-size="14" font-weight="bold" fill="#2f855a">rag-mcp-server</text>
+    <text x="470" y="172" text-anchor="middle" font-size="11" fill="#52606d">server.py（stdio / HTTP）</text>
+    <text x="470" y="190" text-anchor="middle" font-size="10" fill="#888">tools: search_knowledge</text>
+    <text x="470" y="204" text-anchor="middle" font-size="10" fill="#888">knowledge_base_stats</text>
+    <rect x="640" y="120" width="200" height="80" rx="12" fill="#f0fff4" stroke="#2f855a"/>
+    <text x="740" y="148" text-anchor="middle" font-size="12" font-weight="bold" fill="#2f855a">KnowledgeService</text>
+    <text x="740" y="168" text-anchor="middle" font-size="11" fill="#52606d">Embedding(BGE)</text>
+    <text x="740" y="186" text-anchor="middle" font-size="11" fill="#52606d">Retrieval(余弦+阈值)</text>
+    <text x="740" y="204" text-anchor="middle" font-size="10" fill="#888">索引常驻内存</text>
+    <rect x="410" y="250" width="200" height="40" rx="8" fill="#fff" stroke="#b7791f"/>
+    <text x="510" y="275" text-anchor="middle" font-size="11" fill="#b7791f">知识库 knowledge_base.json</text>
+    <g stroke="#52606d" stroke-width="1.5" marker-end="url(#ar4)">
+      <line x1="170" y1="85" x2="358" y2="140"/>
+      <line x1="170" y1="155" x2="358" y2="165"/>
+      <line x1="170" y1="225" x2="358" y2="190"/>
+      <line x1="580" y1="160" x2="638" y2="160"/>
+      <line x1="510" y1="200" x2="510" y2="248"/>
+    </g>
+    <text x="265" y="40" font-size="10" fill="#888">JSON-RPC over stdio 或 HTTP</text>
+  </svg>
+
+  <div class="key"><b>两个真实且可讲的坑：</b>① stdio 模式下 <b>stdout 是协议通道</b>，一行 <code>print</code> 就会破坏报文——日志一律走 stderr；② 客户端用 mcp 1.x、服务端用 mcp 2.x，能互通是因为"互操作依据是协议本身、不是 SDK 版本"。这俩都是面试里的加分细节。</div>
+
+  <div class="note"><b>增强：双传输（stdio + Streamable HTTP）</b>——本地宿主由客户端拉起子进程走 stdio；远程/多客户端则起 HTTP 服务，端点是 <code>/mcp</code>。关键点是<b>只换传输层、不动检索代码</b>：<code>server.py</code> 把同一组 tool 挂到不同 transport，<code>KnowledgeService</code> 完全不知道 MCP 的存在。还处理了两个生产细节：① 默认只绑 <code>127.0.0.1</code>，避免把无鉴权服务暴露公网；② 用域名/IP 对外访问时显式配置 DNS rebinding 的 <code>allowed_hosts / allowed_origins</code>，否则会被 421 拒绝。新增 8 个测试，其中 1 个是<b>真起 server 子进程 + 官方客户端走完整 HTTP 协议</b>的端到端验证。</div>
+
+  <h3 id="ops" style="margin-top:22px;color:var(--red)">本版新增 ③-1：HTTP 生产化 —— 从「能跑」到「可运维」</h3>
+  <div class="key">这一层的关键不是"加了个中间件"，而是<b>顺序和豁免白名单是刻意设计的</b>：限流排在鉴权<b>之前</b>，探针路径排在鉴权限流<b>之外</b>。</div>
+
+  <svg viewBox="0 0 940 210" role="img" aria-label="HTTP 请求处理链">
+    <defs><marker id="arA" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#52606d"/></marker></defs>
+    <rect x="20" y="76" width="130" height="58" rx="10" fill="#eef2f7" stroke="#2b6cb0"/>
+    <text x="85" y="100" text-anchor="middle" font-size="12" font-weight="bold" fill="#2b6cb0">HTTP 请求</text>
+    <text x="85" y="120" text-anchor="middle" font-size="11" fill="#52606d">/mcp</text>
+
+    <rect x="200" y="14" width="300" height="42" rx="10" fill="#f0fff4" stroke="#2f855a"/>
+    <text x="350" y="32" text-anchor="middle" font-size="12" font-weight="bold" fill="#2f855a">/healthz · /metrics：豁免鉴权与限流</text>
+    <text x="350" y="48" text-anchor="middle" font-size="11" fill="#52606d">只读探针，必须能在「没有凭证」时被采集</text>
+
+    <rect x="200" y="76" width="150" height="58" rx="10" fill="#fff" stroke="#2b6cb0"/>
+    <text x="275" y="100" text-anchor="middle" font-size="12" font-weight="bold" fill="#2b6cb0">① 取身份</text>
+    <text x="275" y="120" text-anchor="middle" font-size="11" fill="#52606d">Bearer token / 无则按 IP</text>
+
+    <rect x="380" y="76" width="180" height="58" rx="10" fill="#fff5f5" stroke="#c53030" stroke-width="2"/>
+    <text x="470" y="98" text-anchor="middle" font-size="12" font-weight="bold" fill="#c53030">② 令牌桶限流</text>
+    <text x="470" y="118" text-anchor="middle" font-size="11" fill="#52606d">超限 → 429 + Retry-After</text>
+
+    <rect x="590" y="76" width="180" height="58" rx="10" fill="#fff" stroke="#6b46c1"/>
+    <text x="680" y="98" text-anchor="middle" font-size="12" font-weight="bold" fill="#6b46c1">③ Bearer 校验</text>
+    <text x="680" y="118" text-anchor="middle" font-size="11" fill="#52606d">失败 → 401 + WWW-Authenticate</text>
+
+    <rect x="800" y="76" width="120" height="58" rx="10" fill="#f0fff4" stroke="#2f855a"/>
+    <text x="860" y="100" text-anchor="middle" font-size="12" font-weight="bold" fill="#2f855a">④ 放行</text>
+    <text x="860" y="120" text-anchor="middle" font-size="11" fill="#52606d">MCP 应用</text>
+
+    <line x1="150" y1="90" x2="198" y2="70" stroke="#52606d" stroke-width="1.5" marker-end="url(#arA)"/>
+    <line x1="150" y1="105" x2="198" y2="105" stroke="#52606d" stroke-width="1.5" marker-end="url(#arA)"/>
+    <line x1="350" y1="105" x2="378" y2="105" stroke="#52606d" stroke-width="1.5" marker-end="url(#arA)"/>
+    <line x1="560" y1="105" x2="588" y2="105" stroke="#52606d" stroke-width="1.5" marker-end="url(#arA)"/>
+    <line x1="770" y1="105" x2="798" y2="105" stroke="#52606d" stroke-width="1.5" marker-end="url(#arA)"/>
+    <text x="470" y="162" text-anchor="middle" font-size="11" fill="#c53030">限流为什么排在鉴权之前：没带正确 token 的洪水照样吃 CPU</text>
+    <text x="470" y="182" text-anchor="middle" font-size="11" fill="#2f855a">探针为什么豁免：编排系统靠它判断存活，限流期间仍要 200，不能被误杀</text>
+    <text x="470" y="202" text-anchor="middle" font-size="10" fill="#888">（顺序 = 一次请求自上而下的处理链；也只有 HTTP 传输有这层，stdio 是父子进程、没有网络入口）</text>
+  </svg>
+
+  <div class="key"><b>① 鉴权（Bearer）：</b>无 token → <b>401</b> + <code>WWW-Authenticate</code>；错 token → <b>401</b>；正确 token 通过并成功调用 <code>search_knowledge</code>。token 比较走<b>常量时间</b>比较（不给"按响应时间猜 token"留缝）；配置里写了 <code>auth.enabled=true</code> 却忘了给 token → <b>启动即报错（fail fast）</b>，绝不静默放行。</div>
+
+  <div class="key"><b>② 令牌桶限流（刻意先限流、后鉴权）：</b>未携带正确 token 的洪水，一样要过协议解析、日志、TLS——先限流才能挡住"拿错误 token 暴力猜"。实测 <b>burst=10 连打 18 次 → 前 10 次 401、后 8 次 429 + <code>Retry-After: 2</code></b>；同一时刻 <b><code>/healthz</code> 仍然 200</b>（豁免路径不被限流误杀）。分桶按 token、无 token 按客户端 IP，合法客户端不会被别人的洪水拖累。</div>
+
+  <div class="key"><b>③ 探针与指标（零新依赖）：</b><code>/healthz</code> 返回<b>只读快照</b>（<code>index_ready</code> / <code>documents</code> / <code>chunks</code>），<b>绝不触发建索引</b>——健康检查不该有副作用，否则"探一下就变慢/变贵"；<code>/metrics</code> 是<b>手写 Prometheus 文本格式</b>（counter 命名、label 转义、没有数据时也输出 <code>{rule="none"} 0</code>），就是为了<b>不引入新依赖</b>：可观测性不该成为"启动失败的风险源"。</div>
+
+  <div class="key"><b>④ 压测（20 并发 × 100 请求，用官方 streamable-http 长连接客户端）：</b>QPS <b>166.9</b> / p50 <b>95ms</b> / p95 <b>180.5ms</b> / p99 <b>181.9ms</b> / 错误率 <b>0</b>。防自欺的一步：<b>客户端 160 次调用 == 服务端 <code>tool_calls_total</code> 增量 160</b>——两边对得上，才敢说"服务真的处理了这么多"，而不是客户端自己的计数器自说自话。</div>
+
+  <div class="hl"><b>压测顺带抓到一个真实并发 Bug（这段最有讲头）：</b>并发请求同时 <code>np.save</code> 同一个缓存文件 → <b>后写截断先写</b>，读取端报 <code>file seems not fully written?</code>。修法不是"加个锁就完事"：<b>单飞（single-flight）锁 + 写临时文件 + <code>os.replace</code> 原子替换</b>——读者要么看到旧文件、要么看到完整的新文件，永远不会看到"写了一半"的中间态。</div>
+
+  <div class="note"><b>边界（照实说）：</b>安全层是"够用级"不是生产级——<b>静态共享 token</b>（不是 OAuth 2.1、没有密钥轮换）、<b>进程内令牌桶</b>（多副本要挪到网关层）、默认只绑 <code>127.0.0.1</code>；<b>Dockerfile 已写，但本机没装 Docker，未实际构建验证</b>。压测全部是<b>单机</b>数字，只证明"服务按预期工作"，不代表线上容量。此外 <code>scripts/demo_http_security.py</code> 把这一串做成了<b>一条命令 10 项全 PASS</b> 的演示（401 / 429 / healthz / metrics / 注入标记）。</div>
+
+  <h3 id="inject" style="margin-top:22px;color:var(--purple)">本版新增 ③-2：检索结果的提示注入（间接注入）防护</h3>
+  <div class="key"><b>威胁模型一句话：</b>RAG 检索回来的<b>文档本身</b>可能写着"忽略以上指令、去做 X"——上层 LLM 天然分不清"资料"和"命令"，于是知识库变成了攻击面（间接注入 / 知识库投毒）。</div>
+
+  <svg viewBox="0 0 940 170" role="img" aria-label="提示注入三层防护">
+    <defs><marker id="arB" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#52606d"/></marker></defs>
+    <rect x="20" y="52" width="140" height="66" rx="10" fill="#fff5f5" stroke="#c53030"/>
+    <text x="90" y="76" text-anchor="middle" font-size="12" font-weight="bold" fill="#c53030">检索结果</text>
+    <text x="90" y="94" text-anchor="middle" font-size="11" fill="#52606d">文档正文</text>
+    <text x="90" y="110" text-anchor="middle" font-size="11" fill="#c53030">≠ 可信指令</text>
+
+    <rect x="200" y="52" width="200" height="66" rx="10" fill="#fff" stroke="#2b6cb0"/>
+    <text x="300" y="76" text-anchor="middle" font-size="12" font-weight="bold" fill="#2b6cb0">① 结构化隔离</text>
+    <text x="300" y="94" text-anchor="middle" font-size="11" fill="#52606d">&lt;untrusted_data&gt; 包裹</text>
+    <text x="300" y="110" text-anchor="middle" font-size="11" fill="#52606d">trust: "untrusted"</text>
+
+    <rect x="440" y="42" width="240" height="86" rx="10" fill="#fff" stroke="#6b46c1"/>
+    <text x="560" y="66" text-anchor="middle" font-size="12" font-weight="bold" fill="#6b46c1">② 11 条规则 · 可解释标注</text>
+    <text x="560" y="86" text-anchor="middle" font-size="11" fill="#52606d">中英文指令注入 / 伪 system 行</text>
+    <text x="560" y="102" text-anchor="middle" font-size="11" fill="#52606d">伪工具调用 JSON / ReAct 脚手架</text>
+    <text x="560" y="118" text-anchor="middle" font-size="11" fill="#52606d">零宽字符 / 隐藏样式 / 外带链接</text>
+
+    <rect x="720" y="52" width="200" height="66" rx="10" fill="#f0fff4" stroke="#2f855a"/>
+    <text x="820" y="76" text-anchor="middle" font-size="12" font-weight="bold" fill="#2f855a">③ 中和而不删内容</text>
+    <text x="820" y="94" text-anchor="middle" font-size="11" fill="#52606d">保留正文，只去掉</text>
+    <text x="820" y="110" text-anchor="middle" font-size="11" fill="#52606d">"可执行指令"的形态</text>
+
+    <line x1="160" y1="85" x2="198" y2="85" stroke="#52606d" stroke-width="1.5" marker-end="url(#arB)"/>
+    <line x1="400" y1="85" x2="438" y2="85" stroke="#52606d" stroke-width="1.5" marker-end="url(#arB)"/>
+    <line x1="680" y1="85" x2="718" y2="85" stroke="#52606d" stroke-width="1.5" marker-end="url(#arB)"/>
+    <text x="470" y="150" text-anchor="middle" font-size="11" fill="#888">命中数导出成 rag_mcp_prompt_injection_findings_total{rule="…"} → 知识库被投毒的第一手信号</text>
+    <text x="470" y="166" text-anchor="middle" font-size="10" fill="#888">（规则的 id / 严重级别 / 原因 / 命中片段都返回给上层：可解释，才谈得上判断）</text>
+  </svg>
+
+  <div class="key"><b>三层怎么分工：</b>
+    <ul>
+      <li><b>① 结构化隔离：</b>检索结果一律包进 <code>&lt;untrusted_data&gt;</code> 标签，并带 <code>trust: "untrusted"</code> 字段 + 一句显式声明——让上层<b>知道</b>这段是数据、不是命令。</li>
+      <li><b>② 可解释标注（11 条规则）：</b>命中就返回<b>规则 id + 严重级别 + 人类可读原因 + 命中片段</b>（如 <code>instruction_override</code> / <code>fake_tool_call</code> / <code>react_scaffold</code> / <code>fake_role_line</code> / <code>hidden_markup</code> / <code>exfil_url</code> / <code>overlong_line</code> / <code>invisible_char</code> …），覆盖中英文指令注入、伪 system 行、伪工具调用 JSON、ReAct 脚手架、零宽字符 / Unicode Tag、HTML 注释与 CSS 隐藏、外带链接、超长行、base64 大块。</li>
+      <li><b>③ 中和而不删内容：</b>保留正文（不能因为"疑似"就把资料删掉），只让它<b>不再呈"可执行指令"的形态</b>：角色标签降级成普通文字、外带链接打标、不可见字符转义成可读形式、超长行折行……并提供<b>配置开关</b>可整体关闭。</li>
+    </ul>
+  </div>
+
+  <div class="key"><b>实测证据：</b><b>13 类对抗手法全部命中</b>（每条都给出命中的规则 id）；<b>9 篇正常语料零误伤</b>（含 5 篇真实知识库文档）。命中数计入 <code>/metrics</code> 的 <code>prompt_injection_findings_total{rule}</code>——<b>知识库被投毒的第一手信号</b>，可以直接接告警。</div>
+
+  <div class="note"><b>诚实边界（这段必须照实讲，别改成吹牛版）：</b>模式匹配<b>会被绕过</b>——换措辞、换语言、多段拼接、把指令藏进图片/附件都能绕开；它也会<b>误报</b>（讨论注入的文档、大块 base64 都会被标）。所以它的定位是<b>抬高攻击成本 + 给上层提供判断依据</b>，<b>不能替代上层 Agent 的信任边界与工具权限控制</b>——这句话本身就是加分项。</div>
+</section>
+
+<section id="assistant">
+  <h2>④ llm_interview_assistant — RAG 思想的产品化落地</h2>
+  <p><span class="tag t-purple">Qwen2.5-3B</span><span class="tag t-green">LoRA</span><span class="tag t-blue">多角色</span><span class="tag t-amber">全本地</span></p>
+  <p><b>一句话：</b>本地跑的对话系统：BGE 检索 + ChromaDB 知识库 + Qwen2.5-3B（LoRA 微调）+ 四套人设 + 多轮记忆 + 内容安全。RTX 4070 笔记本全本地推理，隐私不出机。</p>
+
+  <svg viewBox="0 0 940 280" role="img" aria-label="interview-assistant 架构">
+    <defs><marker id="ar5" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#52606d"/></marker></defs>
+    <rect x="20" y="110" width="120" height="60" rx="10" fill="#fff" stroke="#6b46c1"/><text x="80" y="135" text-anchor="middle" font-size="12" font-weight="bold" fill="#6b46c1">用户输入</text><text x="80" y="155" text-anchor="middle" font-size="10" fill="#52606d">+ 安全检测</text>
+    <rect x="170" y="110" width="130" height="60" rx="10" fill="#fff" stroke="#2b6cb0"/><text x="235" y="135" text-anchor="middle" font-size="12" font-weight="bold" fill="#2b6cb0">对话记忆</text><text x="235" y="155" text-anchor="middle" font-size="10" fill="#52606d">滑动窗口</text>
+    <rect x="330" y="110" width="150" height="60" rx="10" fill="#fff" stroke="#2f855a"/><text x="405" y="135" text-anchor="middle" font-size="12" font-weight="bold" fill="#2f855a">BGE 检索</text><text x="405" y="155" text-anchor="middle" font-size="10" fill="#52606d">ChromaDB 知识库</text>
+    <rect x="510" y="110" width="170" height="60" rx="10" fill="#fff" stroke="#b7791f"/><text x="595" y="135" text-anchor="middle" font-size="12" font-weight="bold" fill="#b7791f">Prompt 构造</text><text x="595" y="155" text-anchor="middle" font-size="10" fill="#52606d">人设+检索+记忆</text>
+    <rect x="710" y="110" width="180" height="60" rx="10" fill="#fff" stroke="#6b46c1"/><text x="800" y="135" text-anchor="middle" font-size="12" font-weight="bold" fill="#6b46c1">Qwen2.5-3B+LoRA</text><text x="800" y="155" text-anchor="middle" font-size="10" fill="#52606d">生成 + 安全检测</text>
+    <g stroke="#52606d" stroke-width="1.5" marker-end="url(#ar5)">
+      <line x1="140" y1="140" x2="168" y2="140"/>
+      <line x1="300" y1="140" x2="328" y2="140"/>
+      <line x1="480" y1="140" x2="508" y2="140"/>
+      <line x1="680" y1="140" x2="708" y2="140"/>
+    </g>
+    <rect x="330" y="200" width="150" height="50" rx="8" fill="#f3efff" stroke="#6b46c1"/><text x="405" y="222" text-anchor="middle" font-size="11" fill="#6b46c1">personas.json</text><text x="405" y="240" text-anchor="middle" font-size="10" fill="#888">四套人设</text>
+    <rect x="510" y="200" width="170" height="50" rx="8" fill="#f3efff" stroke="#6b46c1"/><text x="595" y="222" text-anchor="middle" font-size="11" fill="#6b46c1">sft_train.json</text><text x="595" y="240" text-anchor="middle" font-size="10" fill="#888">LoRA 训练数据</text>
+    <line x1="405" y1="170" x2="405" y2="198" stroke="#6b46c1" stroke-width="1.2"/>
+    <line x1="595" y1="170" x2="595" y2="198" stroke="#6b46c1" stroke-width="1.2"/>
+  </svg>
+
+  <div class="key">亮点数据：LoRA 仅 0.5% 可训练参数、68MB 权重、推理零损耗；单次推理 3–10s、显存 ~6.5GB；知识库检索命中率 100%（6 篇×12 块）。<b>对比维度</b>：基座 vs 微调的 8 题量化对比在 <code>benchmark.py</code>。</div>
+</section>
+
+
+<section id="jobfit">
+<h2>⑤ job-fit-assistant — 把三个地基「拼成」一个真能用的应用</h2>
+<p><span class="tag t-green">AI 应用落地</span><span class="tag t-blue">真数据</span><span class="tag t-amber">客观评测</span><span class="tag t-red">含负结果</span><span class="tag t-purple">隐私脱敏</span></p>
+<p><b>一句话：</b>输入<b>岗位 JD</b> + 你的<b>简历</b>，输出<b>技能要求抽取 / 匹配分析（带简历原句证据）/ 差距与优先级建议 / 改写建议 / 预测面试题</b>。
+它<b>不是又一个 demo</b>——作者当时正在找工作，这是自用工具；而且它<b>组合了前面三个地基仓库</b>：hello-agent 负责多步编排与 JSONL trace、
+rag-mcp-server 负责把「简历分块 + 向量检索」做成 MCP 工具、rag-eval-platform 的评测纪律与报告口径直接复用。</p>
+
+<h3>六步流水线（LLM 与规则的分工是明写的）</h3>
+<div class="key">
+<table style="margin-top:8px">
+<tr><th>#</th><th>步骤</th><th>实现</th><th>要点</th></tr>
+<tr><td>1</td><td>JD 技能要求抽取</td><td>DeepSeek LLM + <b>规则兜底</b></td><td>结构化出「技能 / 类别 / 重要度 / <b>原文逐字证据</b>」；兜底占比 <b>30.2%</b>（39/129），<b>全程可追溯</b>（哪条是兜底产出的一眼可见）</td></tr>
+<tr><td>2</td><td>简历解析</td><td>纯规则（.docx <b>真读 XML</b> 保段落边界）</td><td>每项技能都带原文出处</td></tr>
+<tr><td>3</td><td>匹配分析</td><td>规则 + <b>MCP 检索</b>补证据</td><td>命中 / 部分命中 / 缺失 三档，<b>必须给简历原句</b>，不许只给结论</td></tr>
+<tr><td>4</td><td>差距与优先级建议</td><td>按类别动作模板</td><td>给<b>具体动作</b>（不是「建议学 X」这种废话）</td></tr>
+<tr><td>5</td><td>简历改写建议</td><td>缺失项结构建议 + 含糊句 before/after</td><td>指出「写得像会、其实没证据」的句子</td></tr>
+<tr><td>6</td><td>预测面试题</td><td>按风险排序</td><td>优先问<b>简历上写得含糊、缺证据</b>的地方</td></tr>
+</table>
+</div>
+
+<h3>评测：数字客观，还带一个自我否定</h3>
+<div class="key">
+<ul>
+<li><b>数据集：</b>12 份 JD —— <b>9 份是公开可查的真实 JD</b>（腾讯招聘官网，逐份附来源链接与抓取日期）+ <b>3 份自写变体</b>（明确标 <code>authored_variant</code>，<b>不冒充真实 JD</b>）；共 <b>130 条人工标注</b>，<b>证据必须是原文逐字片段</b>，脚本校验对不上直接报错。</li>
+<li><b>抽取质量（micro F1）：</b>系统（LLM+兜底）<b>0.8452</b> ｜ 纯 LLM <b>0.7900</b> ｜ 关键词基线 <b>0.8106</b>
+　→ <b>纯 LLM 这一档反而不如基线（−0.0206）</b>，README 原话是「<b>LLM 单独用会漏词</b>」；只有合并规则兜底才最好（+0.0346）。</li>
+<li><b>证据定位正确率 151/151</b>；<b>端到端「推荐哪版简历」9/12</b>；<b>假绿 0 次</b>（该说缺失却报命中）。</li>
+<li><b>假绿判据是独立的</b>：用人工标注的真值（<code>data/annotations/resume_skill_truth.json</code>）判定 —— 否则系统自证，假绿数恒为 0。</li>
+<li>LLM 成本 <b>$0.0057</b>（12 次调用）；<b>61 passed</b>；CI 两个 job（pytest + 隐私自证）全绿。</li>
+</ul>
+</div>
+
+<div class="note"><b>隐私是当成工程问题做的（不是口号）：</b>真实简历<b>一律不入库</b> —— 只经 <code>scripts/anonymize_resume.py</code> 脱敏（姓名→「候选人」、联系方式/学号/薪资/目标公司全清，<b>保留岗位匹配必需信息</b>）后转成 .md 入库；
+<b>求职作战板等私密文件一律不入库</b>；<code>scripts/privacy_check.sh</code> 在 <b>CI 每次 push</b> 跑同一份脚本做自证（它曾抓出并已修两处真问题：产物含绝对路径、脱敏脚本与测试里硬编码了真实个人信息）。</div>
+</section>
+
+<section id="tiny-llm">
+<h2>⑥ tiny-llm-from-scratch — 不用任何预训练权重，把「训模型」全流程自己走一遍</h2>
+<p><span class="tag t-amber">从零实现</span><span class="tag t-blue">纯 Python BPE</span><span class="tag t-green">CPU 可训</span><span class="tag t-red">如实报边界</span></p>
+<p><b>一句话：</b>不用任何预训练权重、<b>连分词器都自己训</b>（纯 Python BPE，不依赖 <code>tokenizers</code> 库），
+把「<b>数据 → 分词器 → 模型 → 训练 → 评测 → 推理/服务</b>」这条链路自己走完，并留下可复现的证据（曲线、基线对比、生成样例、硬件实测）。
+<b>它证明的是基本功与流程理解，不是「训出了好模型」</b> —— 这点 README 里写得很直白。</p>
+
+<div class="key">
+<table style="margin-top:8px">
+<tr><th>环节</th><th>做了什么</th><th>实测</th></tr>
+<tr><td>语料</td><td>中文维基<b>固定分片</b>，校验官方 SHA256，流式清洗切分</td><td>126.8 MB</td></tr>
+<tr><td>分词器</td><td>纯 Python BPE 训练（base 字符 + merges）</td><td>词表 <b>16,000</b>（12,568 字符 + 3,428 merges）；往返无损抽样 <b>0 处不一致</b></td></tr>
+<tr><td>模型</td><td>从零写 decoder-only Transformer：RMSNorm / RoPE / <b>GQA</b>(6→2) / SwiGLU / <b>embedding 与 lm_head 权重共享</b></td><td><b>15,586,176</b> 参数（6 层 / d_model 384）</td></tr>
+<tr><td>训练</td><td>AdamW + warmup/cosine + 梯度累积 + bf16 + 检查点续训</td><td><b>7,500 步</b> / 61,440,000 token / <b>854.6 s（14.2 min）</b> / 吞吐 71,875 tok/s / <b>峰值显存 1.67 GiB</b></td></tr>
+<tr><td>评测</td><td>模型 vs 均匀 / 一元 / <b>bigram</b> 三条基线</td><td>val PPL <b>129.63 → 36.47</b>；<b>优于全部三条基线</b>，比 bigram 好 <b>7.68×</b>（低 2.038 nats）</td></tr>
+<tr><td>推理</td><td>CLI 采样 + <b>零新依赖</b>的 stdlib HTTP 服务（/healthz、/generate）</td><td><b>37 passed</b>；CI 三项门禁（pytest + 数字自检 + 卫生自证）全绿</td></tr>
+</table>
+</div>
+
+<div class="key"><b>评测协议里最值钱的一句：</b>基线统计<b>只用训练集</b>、评测<b>只在验证集</b>上做（不拿验证集统计自己）；
+模型与所有基线在<b>完全相同的 131,072 个预测位置</b>上打分，loss 才可比；窗口切分与训练期验证窗口<b>逐字节一致</b>，
+所以训练日志里的 val loss 能和报告里的 val loss 直接对上（3.5965 = 3.5964，差在四舍五入）。</div>
+
+<h3>生成样例：它学到了什么、没学到什么</h3>
+<div class="key">
+<table style="margin-top:8px">
+<tr><th>prompt</th><th>模型续写（截断）</th></tr>
+<tr><td>维基百科是</td><td>基督教的教会，由教会成员开创。在宗教改革时，天主教徒可以到任何更严重的教会。教会的教会</td></tr>
+<tr><td>中国位于亚洲东部，是</td><td>大雅且尼半岛最主要的岛屿之一。它是世界上最大的珊瑚礁和周围的珊瑚礁。……参考文献 外部链接 The Talbanetar</td></tr>
+<tr><td>足球是一项</td><td>比赛在2012年8月26日举行的第一轮决赛。参赛球队参赛球队参赛球队参赛球队参赛球队……</td></tr>
+</table>
+<b>怎么读：</b>语法与文体是像的（语序、标点、百科腔、连日期格式都对得上），<b>但事实是错的</b> —— 它把「维基百科」续写成「基督教的教会」、实体之间互相替换。
+所以这 15.59M 参数的模型学到的是<b>语言结构与长程语法</b>，<b>没学到知识</b>（与它 val PPL 36.47 仍远高于真实分布的结论一致）。
+</div>
+
+<div class="note"><b>四条边界（README 里逐条写清）：</b>① <b>训练没跑完</b> —— 目标 12,000 步，进程在 7,500 步被外部终止，所以没有 <code>train_summary.json</code>、学习率没跑完 cosine 全程；
+val PPL 仍在单调下降，<b>继续训练大概率还能更好</b>。② bigram 只有 <b>1 个 token</b> 上下文、本模型有 <b>512 个</b>，<b>信息量不对等</b> ——
+「优于 bigram」只证明学到了语言结构并用上了长上下文，不代表接近真实语料分布。③ 它<b>不是</b>「会写作的模型」：要达到可用的中文生成能力，主流开源模型在 7B 级，参数量差约 <b>450 倍</b>。
+④ 评测脚本默认 <code>--ckpt</code> 指向 <code>latest.pt</code>（step 7000），而报告用的是 <code>best.pt</code>（step 7500）—— <b>评测必须显式指定 checkpoint</b>，否则会得到 38.13 而不是 36.47。</div>
+</section>
+
+<section id="ci">
+  <h2>⑦ 证明层：CI 门禁 + 顶层一键门面（"现场跑给你看"）</h2>
+  <p><span class="tag t-blue">GitHub Actions</span><span class="tag t-green">离线可跑</span><span class="tag t-amber">失败即停</span><span class="tag t-green">已接 GitHub Actions · 真跑</span></p>
+  <p><b>一句话：</b>作品集里所有"我做过"都要能<b>一条命令复现</b>——仓库里有 CI 门禁守回归，项目根有一键门面做现场演示。这一节不是第 7 个项目，而是<b>前六个项目的"可验证性"</b>。</p>
+
+  <h3>一键门面：<code>python demo_all.py</code>（在 <code>portfolio-site/</code> 下执行；五个仓在同级或上一级都行）</h3>
+  <div class="key">依次跑 <b>9 步</b>，每步带进度与耗时，<b>失败即停</b>，并把关键指标从输出里提取出来打印：
+    <table style="margin-top:8px">
+      <tr><th>#</th><th>步骤</th><th>内容</th><th>本机实测结果</th></tr>
+      <tr><td>1</td><td><code>agent-tests</code></td><td>hello-agent 全量测试（离线，脚本化假模型）</td><td><b>180 passed</b></td></tr>
+      <tr><td>2</td><td><code>agent-memory</code></td><td>跨任务记忆（写入 → 召回 → 无关不注入）</td><td><code>[OK]</code></td></tr>
+      <tr><td>3</td><td><code>agent-resume</code></td><td>断点续跑（跑到一半被 kill → 同 <code>thread_id</code> 续跑）</td><td>重放步数 <b>0</b></td></tr>
+      <tr><td>4</td><td><code>agent-usage</code></td><td>用量与成本汇总（扫 trace 重算）</td><td>12 次运行 / <b>49,635 tokens</b> / <b>$0.016382</b></td></tr>
+      <tr><td>5</td><td><code>eval-hybrid</code></td><td>混合检索对照实验（缓存 BGE，离线）</td><td>噪声语料 R@3 <b>0.625 → 1.0</b></td></tr>
+      <tr><td>6</td><td><code>mcp-tests</code></td><td>rag-mcp-server 全量测试（含 HTTP 端到端）</td><td><b>173 passed</b></td></tr>
+      <tr><td>7</td><td><code>mcp-security</code></td><td>HTTP 安全演示（真起服务子进程：401 / 429 / healthz / metrics / 注入）</td><td>安全项 <b>10/10</b></td></tr>
+<tr><td>8</td><td><code>jobfit-tests</code></td><td>job-fit-assistant 全量测试（求职助手，CPU 离线）</td><td><b>61 passed</b></td></tr>
+<tr><td>9</td><td><code>tiny-llm-tests</code></td><td>tiny-llm-from-scratch 全量测试（从零训练项目，CPU 离线）</td><td><b>37 passed</b></td></tr>
+    </table>
+    <b>全 9 步实测 119~191 秒</b>（全新克隆 119.4s；本机多次 135 / 158 / 178 / 191 秒，波动主要来自 <code>agent-tests</code> 一步 26↔50 秒）、<b>全程离线</b>（模型与依赖已缓存；换台机器首次运行会多花模型加载时间）。也可只跑几项：<code>--only</code> / <code>--skip-tests</code> / <code>--list</code>。</div>
+
+  <h3>CI 门禁（GitHub Actions）</h3>
+  <div class="key"><b>五个仓库都有</b> <code>.github/workflows/ci.yml</code>，四件事是想清楚的：
+    <ul>
+      <li><b>离线可跑：</b><code>HF_HUB_OFFLINE=1</code> + <code>TRANSFORMERS_OFFLINE=1</code>，让<b>"缺模型"变成硬失败</b>——而不是在 CI 上静默联网下载几百 MB，把"绿"建立在一个没人看过的网络请求上。</li>
+      <li><b>需要真实 BGE 模型的用例显式排除：</b>用 <code>--deselect</code> 列出清单（<b>不改测试源码</b>），本地全量 173 passed，CI runner 上是 160 passed（13 个用真实 BGE 模型的用例显式排除）。</li>
+      <li><b>回环用例的代理坑：</b><code>NO_PROXY=127.0.0.1</code>——机器上挂了全局代理时，连 <code>127.0.0.1</code> 的请求也会被转发（本机实测回 502），会让回环用例误报失败。</li>
+<li><b>踩过并修掉的真实坑：</b><code>NO_PROXY</code> 与 <code>no_proxy</code> <b>只差大小写</b>，GitHub 的校验器把它们当<b>重复键</b> → <b>整个 workflow 文件被判无效</b>（run 在 job 起来前就失败、且不可重跑，本地 YAML 解析却完全正常）。两个仓同时中招，定位方法是「临时探针仓逐变体二分」。</li>
+<li><b>Gitee Go 也接了：</b>各仓的 <code>.workflow/MasterPipeline.yml</code> 跑的是<b>与 GitHub Actions 完全同一批命令</b>（含同样的排除清单）——两边口径一致，任何一边红了都能在另一边复现，不会出现「是不是环境不一样」的推诿。</li>
+<li><b>文档数字不许漂移：</b>每个仓都有「数字自检」——README 里引用的每个数字必须能从 <code>results/</code> 的产物<b>重算出来</b>，对不上就 CI 报错。求职助手那边还升级成<b>带语境</b>断言：数字必须出现在它该在的那句话里（否则「124 条」这种错值会因为 123 在表格别处出现过而蒙混过关）。</li>
+    </ul>
+  </div>
+
+  <div class="note"><b>诚实标注（必须说清）：</b><b>五个仓库</b>都<b>同时托管在 Gitee 与 GitHub</b>（同一份历史、同一批 commit SHA），<b>而且两边都接了自动门禁</b>：<b>GitHub Actions</b>（每次 push / PR 自动执行，README 顶部的徽章是真跑状态，五个仓全绿）＋ <b>Gitee Go</b>（<code>.workflow/MasterPipeline.yml</code>，<b>同一批命令、同一套口径</b>，含同样的 <code>--deselect</code> 排除清单，每次 push 到默认分支自动构建）—— <b>五个仓在 Gitee 侧也全部构建通过</b>。Gitee 侧的构建记录在仓库页「流水线」里，<b>需要登录才能看到</b> —— 所以 <b>Gitee 侧不挂徽章</b>（匿名访问会被登录墙挡成 404，挂一个坏徽章比不挂更糟）。另外三个真实边界：① <b>GitHub 的 workflow 校验会把「只差大小写的 env 键」当重复键</b>——本项目一度同时写了 <code>NO_PROXY</code> 与 <code>no_proxy</code>，导致<b>整个 workflow 文件被判无效</b>（run 在 job 起来前就失败、且不可重跑）；这个坑已修并写进注释。② <b>有 1 个用例需要真实 BGE 模型 + GPU</b>（<code>tests/test_pipeline.py::test_embedding</code>），CI 上用 <code>--deselect</code> 在命令行显式排除（不改测试源码），汇总行会报 <code>1 deselected</code>——配额对不上就是配置漂了。③ <b>Gitee Go 的 YAML 与 GitHub Actions 方言不同，且键名大小写敏感</b>（写错不会在文件里报错，而是流水线直接不生效），<b>触发器前缀还必须跟各仓的默认分支对上</b>（job-fit 是 <code>main</code>、其余是 <code>master</code> —— 对不上就「推了但没有构建历史」）。</div>
+</section>
+
+<section id="talk">
+  <h2>面试讲法速记</h2>
+  <h3>电梯稿（60 秒，背下来）</h3>
+  <p>「我用 LangGraph 手写了一个最小 ReAct Agent：状态三个字段，循环靠路由函数决定继续调工具还是收尾；工具含经 MCP 接入的 RAG 检索、AST 白名单计算器、时间。RAG 故障会降级进程内直连。每次运行落 JSONL trace，含工具成功率等指标，并跑了一组量化评测。检索链路被我单独做成 MCP Server 复用给 Cursor/Claude，评测平台负责量化 RAG 效果。整套是 Agent+RAG+MCP+评测的递进作品集。」</p>
+
+  <h3>项目介绍稿（STAR）</h3>
+  <ul>
+    <li><b>S</b>：证明自己能把大模型的概率性能力放进可观测、可验证、可恢复的确定性系统。</li>
+    <li><b>T</b>：产出 RAG→MCP Server、ReAct Agent、评测平台三个能跑能讲的仓库。</li>
+    <li><b>A</b>：① 手写 StateGraph 显式化步数/失败/trace；② 失败分四档（不重试/退避/降级/熔断）；③ RAG 双形态，MCP 优先、不可用时直连；④ 服务化那层补上鉴权/限流/探针/指标 + 检索结果注入防护。</li>
+    <li><b>R</b>：demo 全 completed；max_steps=1 稳定"未完成收尾"不假答；MCP 坏掉 auto 如实降级；断点续跑重放步数 0；HTTP 鉴权/限流实测 401 / 429；五仓库合计测试 <b>559 passed / 1 skipped</b>。</li>
+  </ul>
+
+  <h3>主线之后，再补 40～60 秒「新补的一层」</h3>
+  <p>「这套东西我后来又做了一层'能给别人用、也敢承认边界'的工程化：<b>服务层</b>加了 Bearer 鉴权（无 token 401 + <code>WWW-Authenticate</code>）和令牌桶限流（超 burst 429 + <code>Retry-After</code>，而且刻意排在鉴权<b>之前</b>——没带对 token 的洪水一样吃 CPU）；<code>/healthz</code> 是只读快照、绝不触发建索引，<code>/metrics</code> 手写 Prometheus 文本、零新依赖。压测 20 并发 × 100 请求：<b>QPS 166.9、p95 180.5ms、错误率 0</b>，并且客户端 160 次调用正好等于服务端 <code>tool_calls_total</code> 增量 160——两边对得上才敢报数。<b>检索回来的文档我一律当不可信数据</b>：<code>&lt;untrusted_data&gt;</code> 隔离 + 11 条规则标注 + 中和而不删正文，13 类对抗手法全命中、9 篇正常语料零误伤。<b>Agent 侧</b>做了 checkpoint 断点续跑：进程被杀后同 <code>thread_id</code> 续跑，<b>重放步数 = 0</b>；扫 trace 就能重算用量，12 次运行 49,635 tokens / $0.016382。五仓库合计 <b>559 passed / 1 skipped</b>，clone 后两条命令现场跑完（<code>--bootstrap</code> 装依赖 47.8s + 9 步 119~191 秒）。」</p>
+
+  <h3>对齐面试官最关心的五问</h3>
+  <table>
+    <tr><th>问题</th><th>你的答案落点</th></tr>
+    <tr><td>① 状态存在哪</td><td><code>AgentState</code> 三字段（messages / steps / status），无框架黑盒；跨任务记忆走 JSONL + BM25 召回，<b>进程级持久化由 checkpoint 负责</b>（sqlite / JSONL 双后端）</td></tr>
+    <tr><td>② 失败如何分类</td><td>四档 + <code>classify_error()</code> 未知异常按 retryable 兜底</td></tr>
+    <tr><td>③ 副作用如何约束</td><td>计算器无 eval（AST 白名单）、时区构造时固化、工具全只读 → 幂等重试天然成立；<b>但 checkpoint 只保证状态可恢复，副作用是 at-least-once</b>，加写操作要补幂等键</td></tr>
+    <tr><td>④ 结果由谁验证</td><td>确定性部分交给离线测试（五仓库合计 559 passed / 1 skipped）+ 假模型脚本化；概率性部分交给 trace 人工核对</td></tr>
+    <tr><td>⑤ 效果怎么量化</td><td>每次 run 的 metrics 落 JSONL；量化评测给完成率/工具选择准确率/失败恢复率；检索侧用六档位「质量 × 延迟」表，<b>连负结果一起报</b></td></tr>
+  </table>
+
+  <h3>新增能力的追问速查（六问 + 一句答法）</h3>
+  <table>
+    <tr><th>追问</th><th>一句答法（都能指到命令/文件）</th></tr>
+    <tr><td>为什么限流要排在鉴权前面？</td><td>没带正确 token 的洪水同样吃 CPU（协议解析/日志/TLS），先限流才挡得住"暴力猜 token"；探针路径豁免，所以限流期间 <code>/healthz</code> 仍 200，编排不会误判服务已死。</td></tr>
+    <tr><td><code>/metrics</code> 为什么不用 prometheus_client？</td><td>手写 Prometheus 文本格式就够用，<b>零新依赖</b>——可观测性不该变成"启动失败的风险源"；label 转义、空值输出都按格式规范处理过。</td></tr>
+    <tr><td>注入防护为什么用"中和"而不是"删掉"？</td><td>删内容等于替用户做了内容裁决，还可能把合法文档删掉；中和只让它不再呈"可执行指令"形态（角色标签降级、外带链接打标、不可见字符转义），并有开关可关。</td></tr>
+    <tr><td>你的防护能挡住注入吗？</td><td><b>不能，只是抬高成本</b>：换措辞/换语言/多段拼接/藏图里都能绕；它给的是"命中规则 id + 严重级别"这样的判断依据，<b>信任边界仍在最上层 Agent</b>。</td></tr>
+    <tr><td>断点续跑会不会重复执行工具？</td><td>已完成的不重放（实测重放步数 0），<b>但副作用是 at-least-once、不保证幂等</b>；要一致就加幂等键，这条 README 里明写了。</td></tr>
+    <tr><td>为什么不默认开重排 / 查询改写？</td><td>实测收益不确定、代价确定：干净库上召回已经满分，重排只能改排序却要 995ms；HyDE 在噪声库反而掉点（R@3 1.0→0.75，延迟 ×13000）。所以默认关、按场景开。</td></tr>
+  </table>
+</section>
+
+<section id="honest">
+  <h2>诚实边界（说出口就失实，千万别讲）</h2>
+  <div class="note">
+    <ul>
+      <li>❌ "上线 / 生产 / 有用户量 / 能扛 QPS"——这是个人项目，<b>没有部署</b>。压测的 QPS 166.9 是<b>本机单机</b>数字（20 并发 × 100 请求），只证明"服务按预期工作"，不代表线上容量。</li>
+      <li>❌ "安全层是生产级 / 我的防护能挡住注入"——安全层是"够用级"：静态共享 token（不是 OAuth 2.1、没有密钥轮换）、进程内令牌桶（多副本要挪到网关）、默认只绑 <code>127.0.0.1</code>；<b>Dockerfile 已写但本机未装 Docker，没构建验证过</b>。注入防护是模式匹配，<b>会被绕过、也会误报</b>，只能抬高攻击成本 + 给上层依据，<b>不能替代上层 Agent 的信任边界</b>。</li>
+      <li>❌ "断点续跑 = 副作用幂等"——checkpoint 持久化的是<b>状态</b>：续跑只保证"已完成的工具调用不重放"（实测重放步数 0），<b>工具副作用是 at-least-once，不保证幂等</b>，崩溃窗口内写文件/下单这类操作仍可能执行两次。</li>
+      <li>❌ "高级检索技巧一定更好 / 混合检索是银弹"——<b>负结果照实说</b>：噪声库上纯 BM25 的 MRR(1.0) 反而高于混合(0.7708)；HyDE 在噪声库掉点（R@3 1.0→0.75、延迟 ×13000）。重排 / 改写<b>默认关</b>：收益不确定、代价确定。</li>
+      <li>✅ "CI 在自动跑"——<b>这条现在是真的，而且两边都跑</b>：<b>五个仓库</b>都镜像到 GitHub（Actions 每次 push / PR 自动跑测试，workflow 全绿、徽章是真跑状态），<b>同时每个仓都接了 Gitee Go</b>（<code>.workflow/MasterPipeline.yml</code>，<b>同一批命令、同一套口径</b>，每次 push 到默认分支自动构建）。要补两句边界：<b>Gitee 侧的构建记录要登录才能看到</b>（所以那里不挂徽章），且有 1 个用例因需要真实 BGE 模型 + GPU 被 <code>--deselect</code> 排除（汇总行报 <code>1 deselected</code>）。</li>
+      <li>❌ "做了工具选择准确率的正式评测"——<b>现在有了</b>（新增 eval_harness），但样本是 16 条固定 query，讲清"是 smoke 级量化、非大规模基准"；而且这个指标我拆成了严/宽两个口径（严＝工具真的成功执行过），报的时候要说明用的是哪个。</li>
+      <li>❌ "我的 LLM-as-Judge 是可靠裁判 / 本地小模型也能打分"——<b>本地 1.5B 在本任务上不适合作裁判</b>：与强裁判的 faithfulness 几乎零相关（r −0.0326、MAE 1.8182、精确一致 0.2121），且是<b>系统性的中庸化回归</b>（低档 1.667 → 3.167、高档 4.852 → 3.111，两端都往 3 分收），拒答样本 <code>unanswerable#2</code> 被判成 3/5/3。它的适用边界只有<b>两端粗筛</b>。<b>零成本规则判据反而更贴近强裁判</b>（r +0.5890、MAE 0.9152），主干该用它。</li>
+      <li>❌ "两个裁判一致 = 评得对 / 这个评测已经和人类对齐"——人类标注只有 <b>5 条</b>，且只用于校准规则阈值；<b>只做了两裁判一致性</b>，强裁判本身也不是真值；本报告每样本<b>单次调用（N=1）</b>（<b>N=7 方差补测</b>：中位数把 MAE 抽样 sd 降 29%，但结论方向不变；<b>参照系侧 N=3 稳健性补测</b>：把强裁判换成 3 次采样中位数当参照系重算，主结论照样不变，所以分歧不是参照系噪声造成的）；<b>中档 (3) 的 n=0</b>，中间档区分力无法评估；规则判据还有已知 <b>5 类误判</b>。所以这组数字是"一致性证据"，不是"正确性证明"。</li>
+      <li>✅ 已经能讲的（别再说"还没做"）：<b>跨任务记忆、工具并发、上下文压缩、量化评测、断点续跑、用量核算</b>都做了；<b>我还审计过自己项目的指标，抓出过一个"假绿"并修掉了</b>——领域外诚实率原本会把"模型调用失败、什么都没答出来"的运行算成"诚实拒答"（诚实率能刷到 1.0），现在只统计真正完成的运行并把分母一起报出来，配了回归单测；评测层那次"裁判分全部退化成启发式分却看不出来"的 bug 也是我自己挖出来修的。<b>仍然没做</b>的是多 Agent 协作、流式输出、真正的部署。</li>
+      <li>✅ 加分项：大方承认参考了官方 ReAct 范式与 MCP SDK，但设计取舍（步数语义、四档失败、双形态 RAG、trace 字段、鉴权/限流顺序、注入"中和不删除"）是自己定的，每一步能指代码行。</li>
+    </ul>
+  </div>
+  <p style="margin-top:14px;color:var(--sub);font-size:13px">配套源码文档（更细）：<code>portfolio-site/README.md</code>（能力链 + 指标总表 + 9 步门面）；<code>hello-agent/README.md</code> + <code>docs/讲解指南.md</code>（含 12 条高频追问答法）；<code>rag-eval-platform/看代码指南.md</code>；<code>rag-mcp-server/README.md</code>；<code>job-fit-assistant/README.md</code>（求职助手：<code>data/jds/ANNOTATION.md</code> 是标注口径）；<code>tiny-llm-from-scratch/README.md</code>（含每一步的实测与边界）。<br>
+  现场跑：<code>python demo_all.py --bootstrap</code>（装依赖，实测 47.8s）+ <code>python demo_all.py</code>（9 步 / 实测 119~191 秒）；单独跑新能力：<code>rag-mcp-server/scripts/demo_http_security.py</code>（401 / 429 / healthz / metrics / 注入，10 项全 PASS）、<code>hello-agent/scripts/demo_resume.py</code>（重放步数 0）、<code>hello-agent/scripts/usage_report.py</code>（12 次运行 / 49,635 tokens / $0.016382）。</p>
+</section>
+
+</main>
+<footer>个人作品集 · 用于展示能力，非生产系统 · 图表为讲解用结构化示意<br>本版更新：2026-10-19 · 新增 HTTP 生产化（鉴权/限流/探针/指标）· 提示注入防护 · 断点续跑与用量核算 · 检索六档位实测 · CI 与一键门面<br>追加（2026-10-20）：②-2 本地 1.5B 当评测裁判的三方对照实测（含负结果与一致率矩阵）<br>追加（2026-10-21）：五仓镜像到 GitHub（<code>world-breaker/*</code>，同一份历史同一批 SHA）· <b>Actions 真跑且全绿、README 挂真徽章</b> · 修掉一个把 workflow 整个判无效的坑（env 键只差大小写被当重复键） · 12 条「已知边界」开成公开 Issue（每条带实测数字与报告路径）<br>追加（2026-10-21 晚）：<b>新增 ⑤ job-fit-assistant 求职助手</b>（三个地基拼成一个真能用的应用：12 份 JD × 4 份脱敏简历的客观评测，含「纯 LLM 抽取反而不如关键词基线」的负结果，隐私脱敏 + CI 自证）· <b>新增 ⑥ tiny-llm-from-scratch</b>（不用任何预训练权重、连分词器都自己训，15.59M 参数，val PPL 36.47，优于 bigram 基线 7.68×，边界逐条写明）· 作品集总数 340 → <b>559 passed</b>、门面 7 步 → <b>9 步</b><br>追加（2026-10-22）：<b>全新克隆复验</b>——从 GitHub 干净克隆五仓，实测 <code>demo_all.py --bootstrap</code>（装依赖 47.8s、幂等）→ 9 步全绿 → <b>五仓 git status 0 字节</b>（346 个跟踪文件归一化换行符后逐字节等同 HEAD）；门面新增<b>依赖预检</b>，缺环境在开跑前拦下（退出码 2）· 标注条数按数据重数（job-fit「130 条」→「<b>119 条</b>」）· 新增 JD 技能要求<b>人工复核表</b>（抽样 24 条 / 全量 119 条）</footer>
+</body>
+</html>

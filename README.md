@@ -2,11 +2,17 @@
 
 > 一条可复现的能力链：**检索与评测 → MCP 服务化（可运维 / 可审计） → Agent 编排（可中断 / 可核算） → 产品化落地**。
 > 不是孤立 demo：检索链路被封装成标准 MCP 工具复用，Agent 负责多步决策，评测平台负责证明效果；
-> 每一层都能用**一条命令**在本机跑出证据（`python demo_all.py`，9 步，约 180 秒）。
+> 每一层都能用**两条命令**在本机跑出证据（`python demo_all.py --bootstrap` 装依赖 → `python demo_all.py`，9 步，实测 119~191 秒）。
 
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Tests](https://img.shields.io/badge/tests-559%20passed%20%2F%201%20skipped-brightgreen)](#实测指标)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![图文展示页](https://img.shields.io/badge/图文展示页-online-brightgreen)](https://world-breaker.github.io/portfolio-site/)
+
+> **本仓是「门面」**：只放对外的三件套 —— 本文件（能力链 + 指标总表）、`index.html`（图文单页，
+> 已发布到 GitHub Pages：<https://world-breaker.github.io/portfolio-site/>）、`demo_all.py`（一键离线跑通五仓 9 步）。
+> 五个代码仓是**兄弟目录**（`hello-agent` / `rag-eval-platform` / `rag-mcp-server` /
+> `job-fit-assistant` / `tiny-llm-from-scratch`），各自独立仓库、独立 CI。
 
 ---
 
@@ -153,7 +159,7 @@ cd tiny-llm-from-scratch   && python -m pytest tests -q                      # �
 
 ---
 
-## 建议阅读顺序（面试前 30 分钟）
+## 建议阅读顺序（30 分钟）
 
 1. **[hello-agent 架构与韧性](https://gitee.com/tmlKevin/hello-agent#5-可靠性设计与能力增强本项目的重点)**
    —— 三字段状态、四档失败处置、并发与记忆，回答「Agent 到底怎么工程化」。
@@ -174,7 +180,7 @@ cd tiny-llm-from-scratch   && python -m pytest tests -q                      # �
 
 ---
 
-## 三分钟讲法（电梯稿）
+## 三分钟概览（电梯稿）
 
 > "我用 LangGraph 手写了一个最小 ReAct Agent：状态只有 messages / steps / status 三个字段，
 > 循环靠路由函数决定继续调工具还是收尾。
@@ -195,11 +201,11 @@ cd tiny-llm-from-scratch   && python -m pytest tests -q                      # �
 > 简历里出现过这个词不等于会这个技能，所以命中还得有动作动词、有量化结果、在项目语境里，123 条命中结论里假绿 0 次。
 > 另一个是**底层理解**——`tiny-llm-from-scratch` 不用任何预训练权重，连分词器都是纯 Python 从零训的 BPE，
 > Transformer、训练循环、采样、HTTP 服务全自己写，15.59M 参数训到 val PPL 36.47，优于均匀/一元/bigram 三条基线。
-> 整套是 Agent + RAG + MCP + 评测 + 应用落地 + 从零训练 的递进作品集，不是孤立 demo；每一项都能用一条命令现场跑给你看。"
+> 整套是 Agent + RAG + MCP + 评测 + 应用落地 + 从零训练 的递进作品集，不是孤立 demo；每一项都能现场跑出证据。"
 
 ---
 
-## 诚实边界（面试被追问时的安全答案）
+## 诚实边界（被追问时的安全答案）
 
 - **知识库规模小**：14 篇 / 10 篇评测集，指标用于回归与对照，**不代表线上分布**；万级 chunk 需换 Faiss/向量库。
 - **混合检索有适用区间**：干净语料上收益有限，噪声/近义副本语料上才显著；重排已实现但默认关闭（需下载模型）。

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LLM 面试作品集 · 图文讲解</title>
+<title>LLM 工程作品集 · 图文讲解</title>
 <style>
   :root{
     --bg:#f6f8fb; --card:#ffffff; --ink:#1f2933; --sub:#52606d; --line:#d9e2ec;
@@ -63,8 +63,8 @@
 </head>
 <body>
 <header>
-  <h1>LLM 面试作品集 · 图文讲解</h1>
-  <p>Agent + RAG + MCP + 评测 + LoRA/SFT 完整链路 · 让你看明白、讲得清</p>
+  <h1>LLM 工程作品集 · 图文讲解</h1>
+  <p>Agent + RAG + MCP + 评测 + LoRA/SFT 完整链路 · 每一步都能指到命令与数据</p>
   <p style="margin-top:6px;font-size:14px;opacity:.88">本版补齐「可运维 / 可审计 / 可中断 / 可核算」那一层：鉴权 · 限流 · 探针指标 · 注入防护 · 断点续跑 · 用量核算</p>
 </header>
 <nav>
@@ -75,14 +75,14 @@
   <a href="#mcp">③ rag-mcp-server</a>
   <a href="#assistant">④ interview-assistant</a>
   <a href="#ci">⑤ CI / 一键门面</a>
-  <a href="#talk">面试讲法</a>
+  <a href="#talk">设计概览</a>
   <a href="#honest">诚实边界</a>
 </nav>
 <main>
 
 <section id="panorama">
   <h2>0 · 总览：六个项目怎么串成一条链</h2>
-  <p class="big">你这套作品集不是六个孤立 demo，而是<b>一条递进的能力链</b>：把"检索"做成可复用服务 → 被 Agent 调用 → 全链路可观测 → 用评测平台量化效果 → <b>把零件拼成真能用的应用</b> → <b>再从零训一次小模型</b>把基本功也证明一遍。面试时讲清这条主线，比逐个罗列项目强十倍。</p>
+  <p class="big">你这套作品集不是六个孤立 demo，而是<b>一条递进的能力链</b>：把"检索"做成可复用服务 → 被 Agent 调用 → 全链路可观测 → 用评测平台量化效果 → <b>把零件拼成真能用的应用</b> → <b>再从零训一次小模型</b>把基本功也证明一遍。先看这条主线，再看每个项目，比逐个罗列更容易看出每层在解决什么。</p>
   <svg viewBox="0 0 940 450" role="img" aria-label="作品集总览">
     <defs>
       <marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
@@ -276,10 +276,10 @@
     </g>
   </svg>
 
-  <h3>关键设计决策（面试加分点）</h3>
+  <h3>关键设计决策</h3>
   <table>
     <tr><th>决策</th><th>为什么</th></tr>
-    <tr><td>手写 StateGraph，不用 <code>create_react_agent</code></td><td>框架封装掉的"步数怎么数 / 错误怎么回灌 / 状态放哪"正是面试考点；手写约 100 行换来确定性与可讲性</td></tr>
+    <tr><td>手写 StateGraph，不用 <code>create_react_agent</code></td><td>框架封装掉的"步数怎么数 / 错误怎么回灌 / 状态放哪"正是框架最容易封装掉、也最需要说清楚的部分；手写约 100 行换来确定性</td></tr>
     <tr><td>失败分四档：permanent 不重试 / retryable 退避重试 / 耗尽降级 / 连败熔断</td><td>把"概率性失败"变成确定性处置；未知异常一律按 retryable（多试一次的代价 &lt; 直接放弃）</td></tr>
     <tr><td>RAG 工具双形态：MCP 客户端优先，连不上降级进程内直连</td><td>进程隔离（BGE 不进 Agent 进程）+ 复用给 Cursor/Claude；两条路径返回同一 JSON 契约，模型无感知</td></tr>
     <tr><td>trace 一次任务一个 JSONL，密钥永远 <code>sk-****</code></td><td>可回放、可 <code>jq</code> 统计；有测试守着"密钥不泄漏"红线</td></tr>
@@ -365,7 +365,7 @@
     <line x1="250" y1="161" x2="278" y2="240" stroke="#52606d" stroke-width="1.2" marker-end="url(#ar9)"/>
     <line x1="520" y1="251" x2="548" y2="251" stroke="#52606d" stroke-width="1.2" marker-end="url(#ar9)"/>
 
-    <text x="20" y="294" font-size="11" fill="#888">一句话讲法：续跑是「新进程读旧状态」，不是内存里重放；所以"重放步数 = 0"是能指 trace 行给人看的。</text>
+    <text x="20" y="294" font-size="11" fill="#888">一句话说明：续跑是「新进程读旧状态」，不是内存里重放；所以"重放步数 = 0"是能指 trace 行给人看的。</text>
   </svg>
 
   <div class="key"><b>硬证据（<code>scripts/demo_resume.py</code>，离线可复现）：</b>"进程被杀"是用脚本化假模型 + 一个抛 <code>BaseException</code> 的工具造出来的（<code>ToolExecutor</code> 只兜 <code>Exception</code>，所以它直接逃出 <code>run_task</code>，等价于进程结束），然后<b>换一个新的 checkpointer 实例</b>（模拟新进程）用同一个 <code>thread_id</code> 再跑一次。结果：<b>calculator 调用 1→1（没被重放）、只补跑失败的那一步、模型调用 2→1（没把前面两步重算）、最终 status=completed、重放步数 = 0</b>。</div>
@@ -401,7 +401,7 @@
     <text x="40" y="266" font-size="12" fill="#52606d">检索层：Recall@K / Precision / MRR　|　生成层：LLM-as-Judge（faithfulness/relevance/completeness）　|　传统层：BLEU / ROUGE-L</text>
   </svg>
 
-  <div class="note"><b>诚实标注的边界（必讲）：</b>自带样例只有 5 篇文档，三种切分策略的文档级 recall@3 全部 1.0——这是"数据集太小导致的天花板效应"，不是"某策略最优"。实验报告里已如实写明，并给出扩到更大评测集的建议。面试被追问"为什么不选最优"时，这个回答比硬编结论更可信。</div>
+  <div class="note"><b>诚实标注的边界（必须说清）：</b>自带样例只有 5 篇文档，三种切分策略的文档级 recall@3 全部 1.0——这是"数据集太小导致的天花板效应"，不是"某策略最优"。实验报告里已如实写明，并给出扩到更大评测集的建议。被追问"为什么不选最优"时，如实说明比硬编结论更可信。</div>
 
   <h3 style="margin-top:18px;color:var(--blue)">②-增强：混合检索（BM25 + 向量 RRF + 可选重排）</h3>
   <div class="key">把"纯向量"升级为"双路召回 + 排名融合"。这不是炫技——是为了解决纯向量在<b>近义/重复文档</b>上把分数分散到多个副本、导致相关文档排不到前面的真实痛点。</div>
@@ -434,7 +434,7 @@
     <text x="30" y="237" font-size="11" fill="#2f855a">实测：噪声近义语料上 纯向量 Recall@3=0.625 → 混合检索=1.0（MRR 0.48→0.77）；干净 14 篇库上两者均接近上限，混合收益有限（如实标注）。</text>
   </svg>
 
-  <div class="note"><b>怎么讲这坨（STAR）：</b>"纯向量检索对精确术语和近义副本不敏感。我加了 BM25 关键词路 + 向量语义路<b>双路召回</b>，用 <b>RRF（按排名融合，而非加权求和，因为两路分数量纲不同）</b>合并，并可接 <b>Cross-Encoder 重排</b>二次精排。为证明有效，我搭了两个评测集做对照：干净知识库上两者都接近上限，<b>但含近义副本的噪声语料上，纯向量 recall@3 只有 0.625、混合拉到 1.0</b>——这正好说明'何时该上混合检索'。用 <code>retrieval.mode</code> 开关切换，默认纯向量保证零回归。"</div>
+  <div class="note"><b>设计取舍（STAR）：</b>"纯向量检索对精确术语和近义副本不敏感。我加了 BM25 关键词路 + 向量语义路<b>双路召回</b>，用 <b>RRF（按排名融合，而非加权求和，因为两路分数量纲不同）</b>合并，并可接 <b>Cross-Encoder 重排</b>二次精排。为证明有效，我搭了两个评测集做对照：干净知识库上两者都接近上限，<b>但含近义副本的噪声语料上，纯向量 recall@3 只有 0.625、混合拉到 1.0</b>——这正好说明'何时该上混合检索'。用 <code>retrieval.mode</code> 开关切换，默认纯向量保证零回归。"</div>
 
   <h3 id="sixmode" style="margin-top:22px;color:var(--amber)">本版新增：六档位实测（质量 × 延迟，含负结果）</h3>
   <div class="key">把 <b>纯向量 / 纯 BM25 / 混合 RRF / +重排 / +multi-query / +HyDE</b> 六个档位在同一口径下跑完（<b>文档级</b> Recall@3 / MRR，延迟是单次 <code>_retrieve</code> 的热启动 p50，不含生成回答），并把<b>延迟一起记账</b>。评测集两套：<code>realistic</code>（14 篇，话题区分度大）与 <code>near_dup_stress</code>（10 篇，含大量近义副本的噪声库）。</div>
@@ -470,7 +470,7 @@
     </ul>
   </div>
 
-  <div class="key"><b>怎么讲（一句话版）：</b>"我把检索的六个档位在同一口径下跑了一遍，并且<b>把延迟一起记账</b>：+重排能把 MRR 从 0.9286 顶到 1.0，但要花 995ms；HyDE 在干净库上没有收益、在噪声库上反而掉到 0.75 且延迟 12.6s。所以我把它做成默认关——<b>能证明"什么时候不该用"，比只会说"我上了高级技巧"更值钱</b>。"</div>
+  <div class="key"><b>一句话总结：</b>"我把检索的六个档位在同一口径下跑了一遍，并且<b>把延迟一起记账</b>：+重排能把 MRR 从 0.9286 顶到 1.0，但要花 995ms；HyDE 在干净库上没有收益、在噪声库上反而掉到 0.75 且延迟 12.6s。所以我把它做成默认关——<b>能证明"什么时候不该用"，比只会说"我上了高级技巧"更值钱</b>。"</div>
 </section>
 
 <section id="judge">
@@ -478,7 +478,7 @@
   <p><span class="tag t-amber">实测</span><span class="tag t-blue">三方对照</span><span class="tag t-green">零成本规则主干</span><span class="tag t-red">负结果</span><span class="tag t-purple">可复现</span></p>
   <p><b>一句话：</b>仓库里早就有"让本地小模型当 LLM-as-Judge"的实现和文档宣称，但<b>一个实测数字都没有</b>。这一节把它补上：<b>同一批 33 条样本 + 同一份检索上下文 + 同一份 rubric</b>，让<b>规则判据 / 本地 Qwen2.5-1.5B 自评 / 强裁判 API</b> 三方各判一遍，再比它们彼此有多一致。结论先说：<b>本地 1.5B 在这个任务上不适合作裁判</b>——与强裁判几乎零相关（r −0.0326）、MAE 1.8182，而且偏差是<b>系统性的中庸化回归</b>，它能胜任的只是<b>两端粗筛</b>。反过来，<b>零成本的规则判据比它更贴近强裁判</b>（r +0.5890、MAE 0.9152）。</p>
 
-  <div class="note"><b>为什么这条值得花时间修：</b>它原本属于典型的「<b>有实现、有文档宣称、零实测数字、零测试覆盖</b>」——代码能跑、README 写着支持三维打分，可面试官一句"faithfulness 多少分"就答不上来。修它的价值不在于"多一个功能"，而在于<b>把一句宣称换成一次测量</b>：现在它有数字、有口径、有边界，还能离线复跑。</div>
+  <div class="note"><b>为什么这条值得花时间修：</b>它原本属于典型的「<b>有实现、有文档宣称、零实测数字、零测试覆盖</b>」——代码能跑、README 写着支持三维打分，可一旦被问"faithfulness 多少分"就答不上来。修它的价值不在于"多一个功能"，而在于<b>把一句宣称换成一次测量</b>：现在它有数字、有口径、有边界，还能离线复跑。</div>
 
   <div class="stats">
     <div class="stat red"><b>0.2121</b><span>B vs C 精确一致<br>（本地自评 vs 强裁判）</span></div>
@@ -618,7 +618,7 @@
     </ul>
   </div>
 
-  <div class="key"><b>怎么讲（一句话版）：</b>"我不猜，我测了——同一批 33 条样本、同一份 rubric，把规则判据、本地 1.5B 自评、强裁判摆在一起对照：<b>本地 1.5B 的 faithfulness 与强裁判几乎零相关（r −0.0326、MAE 1.8182）</b>，而且不是抖动、是<b>中庸化回归</b>——低档 6 条被抬到 3.167（强裁判 1.667）、高档 27 条被压到 3.111（强裁判 4.852），最该抓的拒答样本被判成 3/5/3。<b>而且我把参照系本身也换成 3 次采样的中位数重算了一遍，主结论照样不变</b>（本地 r −0.1595 / MAE 1.9394，规则臂 r +0.5485 / MAE 1.0061）——分歧不是参照系噪声造成的。<b>反倒是零成本的规则判据更贴近强裁判（r +0.5890、MAE 0.9152）</b>。所以我的结论是<b>分工</b>：规则判据进 CI 当主干，强裁判只做小样本交叉验证（整轮 ¥0.0232），本地 1.5B 只用于两端粗筛。这不是"1.5B 不行"，是<b>位置放错了</b>。"</div>
+  <div class="key"><b>一句话总结：</b>"我不猜，我测了——同一批 33 条样本、同一份 rubric，把规则判据、本地 1.5B 自评、强裁判摆在一起对照：<b>本地 1.5B 的 faithfulness 与强裁判几乎零相关（r −0.0326、MAE 1.8182）</b>，而且不是抖动、是<b>中庸化回归</b>——低档 6 条被抬到 3.167（强裁判 1.667）、高档 27 条被压到 3.111（强裁判 4.852），最该抓的拒答样本被判成 3/5/3。<b>而且我把参照系本身也换成 3 次采样的中位数重算了一遍，主结论照样不变</b>（本地 r −0.1595 / MAE 1.9394，规则臂 r +0.5485 / MAE 1.0061）——分歧不是参照系噪声造成的。<b>反倒是零成本的规则判据更贴近强裁判（r +0.5890、MAE 0.9152）</b>。所以我的结论是<b>分工</b>：规则判据进 CI 当主干，强裁判只做小样本交叉验证（整轮 ¥0.0232），本地 1.5B 只用于两端粗筛。这不是"1.5B 不行"，是<b>位置放错了</b>。"</div>
 </section>
 
 <section id="mcp">
@@ -656,7 +656,7 @@
     <text x="265" y="40" font-size="10" fill="#888">JSON-RPC over stdio 或 HTTP</text>
   </svg>
 
-  <div class="key"><b>两个真实且可讲的坑：</b>① stdio 模式下 <b>stdout 是协议通道</b>，一行 <code>print</code> 就会破坏报文——日志一律走 stderr；② 客户端用 mcp 1.x、服务端用 mcp 2.x，能互通是因为"互操作依据是协议本身、不是 SDK 版本"。这俩都是面试里的加分细节。</div>
+  <div class="key"><b>两个真实且可讲的坑：</b>① stdio 模式下 <b>stdout 是协议通道</b>，一行 <code>print</code> 就会破坏报文——日志一律走 stderr；② 客户端用 mcp 1.x、服务端用 mcp 2.x，能互通是因为"互操作依据是协议本身、不是 SDK 版本"。这两个细节最容易暴露对协议层的理解深度。</div>
 
   <div class="note"><b>增强：双传输（stdio + Streamable HTTP）</b>——本地宿主由客户端拉起子进程走 stdio；远程/多客户端则起 HTTP 服务，端点是 <code>/mcp</code>。关键点是<b>只换传输层、不动检索代码</b>：<code>server.py</code> 把同一组 tool 挂到不同 transport，<code>KnowledgeService</code> 完全不知道 MCP 的存在。还处理了两个生产细节：① 默认只绑 <code>127.0.0.1</code>，避免把无鉴权服务暴露公网；② 用域名/IP 对外访问时显式配置 DNS rebinding 的 <code>allowed_hosts / allowed_origins</code>，否则会被 421 拒绝。新增 8 个测试，其中 1 个是<b>真起 server 子进程 + 官方客户端走完整 HTTP 协议</b>的端到端验证。</div>
 
@@ -899,11 +899,11 @@ val PPL 仍在单调下降，<b>继续训练大概率还能更好</b>。② bigr
 </section>
 
 <section id="talk">
-  <h2>面试讲法速记</h2>
-  <h3>电梯稿（60 秒，背下来）</h3>
+  <h2>设计概览与常见追问</h2>
+  <h3>60 秒概览</h3>
   <p>「我用 LangGraph 手写了一个最小 ReAct Agent：状态三个字段，循环靠路由函数决定继续调工具还是收尾；工具含经 MCP 接入的 RAG 检索、AST 白名单计算器、时间。RAG 故障会降级进程内直连。每次运行落 JSONL trace，含工具成功率等指标，并跑了一组量化评测。检索链路被我单独做成 MCP Server 复用给 Cursor/Claude，评测平台负责量化 RAG 效果。整套是 Agent+RAG+MCP+评测的递进作品集。」</p>
 
-  <h3>项目介绍稿（STAR）</h3>
+  <h3>项目概览（STAR）</h3>
   <ul>
     <li><b>S</b>：证明自己能把大模型的概率性能力放进可观测、可验证、可恢复的确定性系统。</li>
     <li><b>T</b>：产出 RAG→MCP Server、ReAct Agent、评测平台三个能跑能讲的仓库。</li>
@@ -914,7 +914,7 @@ val PPL 仍在单调下降，<b>继续训练大概率还能更好</b>。② bigr
   <h3>主线之后，再补 40～60 秒「新补的一层」</h3>
   <p>「这套东西我后来又做了一层'能给别人用、也敢承认边界'的工程化：<b>服务层</b>加了 Bearer 鉴权（无 token 401 + <code>WWW-Authenticate</code>）和令牌桶限流（超 burst 429 + <code>Retry-After</code>，而且刻意排在鉴权<b>之前</b>——没带对 token 的洪水一样吃 CPU）；<code>/healthz</code> 是只读快照、绝不触发建索引，<code>/metrics</code> 手写 Prometheus 文本、零新依赖。压测 20 并发 × 100 请求：<b>QPS 166.9、p95 180.5ms、错误率 0</b>，并且客户端 160 次调用正好等于服务端 <code>tool_calls_total</code> 增量 160——两边对得上才敢报数。<b>检索回来的文档我一律当不可信数据</b>：<code>&lt;untrusted_data&gt;</code> 隔离 + 11 条规则标注 + 中和而不删正文，13 类对抗手法全命中、9 篇正常语料零误伤。<b>Agent 侧</b>做了 checkpoint 断点续跑：进程被杀后同 <code>thread_id</code> 续跑，<b>重放步数 = 0</b>；扫 trace 就能重算用量，12 次运行 49,635 tokens / $0.016382。五仓库合计 <b>559 passed / 1 skipped</b>，clone 后两条命令现场跑完（<code>--bootstrap</code> 装依赖 47.8s + 9 步 119~191 秒）。」</p>
 
-  <h3>对齐面试官最关心的五问</h3>
+  <h3>五个最常被问到的设计问题</h3>
   <table>
     <tr><th>问题</th><th>你的答案落点</th></tr>
     <tr><td>① 状态存在哪</td><td><code>AgentState</code> 三字段（messages / steps / status），无框架黑盒；跨任务记忆走 JSONL + BM25 召回，<b>进程级持久化由 checkpoint 负责</b>（sqlite / JSONL 双后端）</td></tr>
@@ -924,9 +924,9 @@ val PPL 仍在单调下降，<b>继续训练大概率还能更好</b>。② bigr
     <tr><td>⑤ 效果怎么量化</td><td>每次 run 的 metrics 落 JSONL；量化评测给完成率/工具选择准确率/失败恢复率；检索侧用六档位「质量 × 延迟」表，<b>连负结果一起报</b></td></tr>
   </table>
 
-  <h3>新增能力的追问速查（六问 + 一句答法）</h3>
+  <h3>新增能力的常见追问（六问）</h3>
   <table>
-    <tr><th>追问</th><th>一句答法（都能指到命令/文件）</th></tr>
+    <tr><th>追问</th><th>要点（都能指到命令/文件）</th></tr>
     <tr><td>为什么限流要排在鉴权前面？</td><td>没带正确 token 的洪水同样吃 CPU（协议解析/日志/TLS），先限流才挡得住"暴力猜 token"；探针路径豁免，所以限流期间 <code>/healthz</code> 仍 200，编排不会误判服务已死。</td></tr>
     <tr><td><code>/metrics</code> 为什么不用 prometheus_client？</td><td>手写 Prometheus 文本格式就够用，<b>零新依赖</b>——可观测性不该变成"启动失败的风险源"；label 转义、空值输出都按格式规范处理过。</td></tr>
     <tr><td>注入防护为什么用"中和"而不是"删掉"？</td><td>删内容等于替用户做了内容裁决，还可能把合法文档删掉；中和只让它不再呈"可执行指令"形态（角色标签降级、外带链接打标、不可见字符转义），并有开关可关。</td></tr>
@@ -948,11 +948,11 @@ val PPL 仍在单调下降，<b>继续训练大概率还能更好</b>。② bigr
       <li>❌ "做了工具选择准确率的正式评测"——<b>现在有了</b>（新增 eval_harness），但样本是 16 条固定 query，讲清"是 smoke 级量化、非大规模基准"；而且这个指标我拆成了严/宽两个口径（严＝工具真的成功执行过），报的时候要说明用的是哪个。</li>
       <li>❌ "我的 LLM-as-Judge 是可靠裁判 / 本地小模型也能打分"——<b>本地 1.5B 在本任务上不适合作裁判</b>：与强裁判的 faithfulness 几乎零相关（r −0.0326、MAE 1.8182、精确一致 0.2121），且是<b>系统性的中庸化回归</b>（低档 1.667 → 3.167、高档 4.852 → 3.111，两端都往 3 分收），拒答样本 <code>unanswerable#2</code> 被判成 3/5/3。它的适用边界只有<b>两端粗筛</b>。<b>零成本规则判据反而更贴近强裁判</b>（r +0.5890、MAE 0.9152），主干该用它。</li>
       <li>❌ "两个裁判一致 = 评得对 / 这个评测已经和人类对齐"——人类标注只有 <b>5 条</b>，且只用于校准规则阈值；<b>只做了两裁判一致性</b>，强裁判本身也不是真值；本报告每样本<b>单次调用（N=1）</b>（<b>N=7 方差补测</b>：中位数把 MAE 抽样 sd 降 29%，但结论方向不变；<b>参照系侧 N=3 稳健性补测</b>：把强裁判换成 3 次采样中位数当参照系重算，主结论照样不变，所以分歧不是参照系噪声造成的）；<b>中档 (3) 的 n=0</b>，中间档区分力无法评估；规则判据还有已知 <b>5 类误判</b>。所以这组数字是"一致性证据"，不是"正确性证明"。</li>
-      <li>✅ 已经能讲的（别再说"还没做"）：<b>跨任务记忆、工具并发、上下文压缩、量化评测、断点续跑、用量核算</b>都做了；<b>我还审计过自己项目的指标，抓出过一个"假绿"并修掉了</b>——领域外诚实率原本会把"模型调用失败、什么都没答出来"的运行算成"诚实拒答"（诚实率能刷到 1.0），现在只统计真正完成的运行并把分母一起报出来，配了回归单测；评测层那次"裁判分全部退化成启发式分却看不出来"的 bug 也是我自己挖出来修的。<b>仍然没做</b>的是多 Agent 协作、流式输出、真正的部署。</li>
-      <li>✅ 加分项：大方承认参考了官方 ReAct 范式与 MCP SDK，但设计取舍（步数语义、四档失败、双形态 RAG、trace 字段、鉴权/限流顺序、注入"中和不删除"）是自己定的，每一步能指代码行。</li>
+      <li>✅ 已经做完的（别再说"还没做"）：<b>跨任务记忆、工具并发、上下文压缩、量化评测、断点续跑、用量核算</b>都做了；<b>我还审计过自己项目的指标，抓出过一个"假绿"并修掉了</b>——领域外诚实率原本会把"模型调用失败、什么都没答出来"的运行算成"诚实拒答"（诚实率能刷到 1.0），现在只统计真正完成的运行并把分母一起报出来，配了回归单测；评测层那次"裁判分全部退化成启发式分却看不出来"的 bug 也是我自己挖出来修的。<b>仍然没做</b>的是多 Agent 协作、流式输出、真正的部署。</li>
+      <li>✅ 借鉴与自研的边界：大方承认参考了官方 ReAct 范式与 MCP SDK，但设计取舍（步数语义、四档失败、双形态 RAG、trace 字段、鉴权/限流顺序、注入"中和不删除"）是自己定的，每一步能指代码行。</li>
     </ul>
   </div>
-  <p style="margin-top:14px;color:var(--sub);font-size:13px">配套源码文档（更细）：<code>portfolio-site/README.md</code>（能力链 + 指标总表 + 9 步门面）；<code>hello-agent/README.md</code> + <code>docs/讲解指南.md</code>（含 12 条高频追问答法）；<code>rag-eval-platform/看代码指南.md</code>；<code>rag-mcp-server/README.md</code>；<code>job-fit-assistant/README.md</code>（求职助手：<code>data/jds/ANNOTATION.md</code> 是标注口径）；<code>tiny-llm-from-scratch/README.md</code>（含每一步的实测与边界）。<br>
+  <p style="margin-top:14px;color:var(--sub);font-size:13px">配套源码文档（更细）：<code>portfolio-site/README.md</code>（能力链 + 指标总表 + 9 步门面）；<code>hello-agent/README.md</code> + <code>docs/讲解指南.md</code>（含逐文件代码导读与自查清单）；<code>rag-eval-platform/看代码指南.md</code>；<code>rag-mcp-server/README.md</code>；<code>job-fit-assistant/README.md</code>（求职助手：<code>data/jds/ANNOTATION.md</code> 是标注口径）；<code>tiny-llm-from-scratch/README.md</code>（含每一步的实测与边界）。<br>
   现场跑：<code>python demo_all.py --bootstrap</code>（装依赖，实测 47.8s）+ <code>python demo_all.py</code>（9 步 / 实测 119~191 秒）；单独跑新能力：<code>rag-mcp-server/scripts/demo_http_security.py</code>（401 / 429 / healthz / metrics / 注入，10 项全 PASS）、<code>hello-agent/scripts/demo_resume.py</code>（重放步数 0）、<code>hello-agent/scripts/usage_report.py</code>（12 次运行 / 49,635 tokens / $0.016382）。</p>
 </section>
 
